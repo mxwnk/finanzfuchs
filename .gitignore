@@ -1,0 +1,20 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.env
+*.env
+!.env.example
+# Bank sessions and raw bank responses: private and not reproducible after 90 days.
+data/
+# Enable Banking application keys.
+*.pem
+.DS_Store
+~$*.xlsx
+# DKB exports and other bank data.
+*.csv
+# Local preview server config.
+.claude/
+# The old plan holds IBANs of the family accounts; it stays local.
+*.xlsx

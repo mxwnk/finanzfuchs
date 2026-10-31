@@ -1,0 +1,841 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fuxbau Bauplan</title>
+<script>/*__ECHARTS__*/</script>
+<style>
+  :root {
+    color-scheme: light;
+    --page: #f4f3ef;
+    --surface-1: #fcfcfb;
+    --surface-2: #f0efec;
+    --border: #e4e2dc;
+    --text-primary: #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted: #8a8882;
+    --grid: #e9e7e1;
+    --income: #2a78d6;
+    --expense: #eb6834;
+    --plan: #52514e;
+    --good: #0ca30c;
+    --good-text: #006300;
+    --critical: #d03b3b;
+    --critical-text: #b42828;
+    --warning: #fab219;
+    --accent: #eb6834;
+    --seq-1: #cde2fb; --seq-2: #9ec5f4; --seq-3: #6da7ec; --seq-4: #3987e5; --seq-5: #256abf; --seq-6: #184f95;
+    --shadow: 0 1px 2px rgba(20, 18, 12, .04), 0 4px 16px rgba(20, 18, 12, .05);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --page: #121211; --surface-1: #1a1a19; --surface-2: #232321; --border: #2e2e2b;
+      --text-primary: #f0efec; --text-secondary: #c3c2b7; --text-muted: #8d8c84; --grid: #2a2a27;
+      --income: #3987e5; --expense: #d95926; --plan: #c3c2b7;
+      --good-text: #4fcf4f; --critical-text: #ff8a8a; --accent: #d95926;
+      --seq-1: #184f95; --seq-2: #1c5cab; --seq-3: #256abf; --seq-4: #3987e5; --seq-5: #6da7ec; --seq-6: #9ec5f4;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 16px rgba(0,0,0,.25);
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --page: #121211; --surface-1: #1a1a19; --surface-2: #232321; --border: #2e2e2b;
+    --text-primary: #f0efec; --text-secondary: #c3c2b7; --text-muted: #8d8c84; --grid: #2a2a27;
+    --income: #3987e5; --expense: #d95926; --plan: #c3c2b7;
+    --good-text: #4fcf4f; --critical-text: #ff8a8a; --accent: #d95926;
+    --seq-1: #184f95; --seq-2: #1c5cab; --seq-3: #256abf; --seq-4: #3987e5; --seq-5: #6da7ec; --seq-6: #9ec5f4;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 16px rgba(0,0,0,.25);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--page); color: var(--text-primary);
+    font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .num { font-variant-numeric: tabular-nums; }
+  .wrap { max-width: 1440px; margin: 0 auto; padding: 0 24px 48px; }
+
+  header.top {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    padding: 22px 0 14px;
+  }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .logo {
+    width: 38px; height: 38px; border-radius: 11px; display: grid; place-items: center;
+    background: linear-gradient(135deg, #eb6834, #c9471a); color: #fff; font-size: 20px;
+    box-shadow: 0 4px 14px rgba(235, 104, 52, .35);
+  }
+  .brand h1 { margin: 0; font-size: 19px; font-weight: 700; letter-spacing: -.01em; }
+  .brand p { margin: 1px 0 0; color: var(--text-muted); font-size: 12.5px; }
+  .icon-btn {
+    border: 1px solid var(--border); background: var(--surface-1); color: var(--text-secondary);
+    border-radius: 10px; height: 36px; padding: 0 12px; cursor: pointer; font: inherit;
+  }
+  .icon-btn:hover { color: var(--text-primary); }
+
+  .filters {
+    position: sticky; top: 0; z-index: 20; display: flex; flex-wrap: wrap; align-items: center;
+    gap: 10px; padding: 10px 0 12px; background: var(--page);
+  }
+  .filters select {
+    height: 34px; border-radius: 9px; border: 1px solid var(--border); background: var(--surface-1);
+    color: var(--text-primary); font: inherit; padding: 0 30px 0 10px;
+  }
+  .months { display: flex; gap: 2px; background: var(--surface-2); padding: 3px; border-radius: 10px; flex-wrap: wrap; }
+  .months button {
+    border: 0; background: transparent; color: var(--text-secondary); font: inherit; font-size: 13px;
+    height: 28px; padding: 0 10px; border-radius: 7px; cursor: pointer; font-weight: 500;
+  }
+  .months button:hover:not(:disabled) { color: var(--text-primary); background: var(--surface-1); }
+  .months button.active { background: var(--surface-1); color: var(--text-primary); box-shadow: var(--shadow); font-weight: 600; }
+  .months button:disabled { opacity: .35; cursor: default; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; border-radius: 99px;
+    background: var(--surface-1); border: 1px solid var(--border); font-size: 12.5px; color: var(--text-secondary);
+  }
+  .chip button { border: 0; background: none; color: var(--text-muted); cursor: pointer; font-size: 15px; padding: 0; }
+  .spacer { flex: 1; }
+  .scope { color: var(--text-muted); font-size: 12.5px; }
+
+  .grid { display: grid; gap: 16px; grid-template-columns: repeat(12, minmax(0, 1fr)); }
+  .card {
+    background: var(--surface-1); border: 1px solid var(--border); border-radius: 16px;
+    box-shadow: var(--shadow); padding: 18px 18px 14px; min-width: 0;
+  }
+  .card h2 { margin: 0; font-size: 14px; font-weight: 600; letter-spacing: -.005em; }
+  .card .sub { margin: 2px 0 0; color: var(--text-muted); font-size: 12.5px; }
+  .card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 8px; }
+  .legend { display: flex; gap: 14px; font-size: 12px; color: var(--text-secondary); flex-wrap: wrap; }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+  .legend i.line { height: 2px; border-radius: 0; width: 14px; vertical-align: 3px; }
+  .span-12 { grid-column: span 12; } .span-8 { grid-column: span 8; } .span-7 { grid-column: span 7; }
+  .span-6 { grid-column: span 6; } .span-5 { grid-column: span 5; } .span-4 { grid-column: span 4; }
+  @media (max-width: 1100px) { .span-8, .span-7, .span-6, .span-5, .span-4 { grid-column: span 12; } }
+
+  .kpis { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px; margin-bottom: 16px; }
+  @media (max-width: 1100px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .kpi { padding: 16px 16px 10px; }
+  .kpi .label { font-size: 12.5px; color: var(--text-secondary); font-weight: 500; display: flex; align-items: center; gap: 7px; }
+  .kpi .label i { width: 8px; height: 8px; border-radius: 2px; display: inline-block; }
+  .kpi .value { font-size: 27px; font-weight: 700; letter-spacing: -.02em; margin: 6px 0 2px; }
+  .kpi .delta { font-size: 12.5px; color: var(--text-secondary); display: flex; gap: 6px; align-items: center; min-height: 19px; }
+  .badge { display: inline-flex; align-items: center; gap: 3px; font-weight: 600; padding: 1px 7px; border-radius: 99px; font-size: 12px; }
+  .badge.good { color: var(--good-text); background: color-mix(in srgb, var(--good) 13%, transparent); }
+  .badge.bad { color: var(--critical-text); background: color-mix(in srgb, var(--critical) 13%, transparent); }
+  .badge.neutral { color: var(--text-secondary); background: var(--surface-2); }
+  .spark { height: 38px; margin-top: 6px; }
+
+  .chart { width: 100%; }
+  .h-280 { height: 280px; } .h-320 { height: 320px; } .h-360 { height: 360px; } .h-220 { height: 220px; }
+
+  .insights { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 10px; }
+  .insights li { display: grid; grid-template-columns: 26px 1fr; gap: 8px; align-items: start; font-size: 13.5px; }
+  .insights .ico { width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center; font-size: 13px; font-weight: 700; }
+  .ico.bad { background: color-mix(in srgb, var(--critical) 14%, transparent); color: var(--critical-text); }
+  .ico.good { background: color-mix(in srgb, var(--good) 14%, transparent); color: var(--good-text); }
+  .ico.info { background: color-mix(in srgb, var(--income) 14%, transparent); color: var(--income); }
+  .ico.warn { background: color-mix(in srgb, var(--warning) 22%, transparent); color: #9a6a00; }
+  .insights b { font-weight: 600; }
+  .insights .muted { color: var(--text-muted); }
+  .link { color: var(--income); cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+
+  .table-tools { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .table-tools input[type=search] {
+    height: 34px; border-radius: 9px; border: 1px solid var(--border); background: var(--surface-2);
+    color: var(--text-primary); font: inherit; padding: 0 12px; width: 260px;
+  }
+  .toggle { display: inline-flex; gap: 6px; align-items: center; font-size: 12.5px; color: var(--text-secondary); cursor: pointer; }
+  .table-wrap { overflow: auto; max-height: 520px; margin-top: 10px; border-radius: 10px; border: 1px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { position: sticky; top: 0; background: var(--surface-2); text-align: left; font-weight: 600; color: var(--text-secondary); padding: 9px 12px; font-size: 12px; cursor: pointer; white-space: nowrap; }
+  td { padding: 8px 12px; border-top: 1px solid var(--border); vertical-align: top; }
+  td.amount { text-align: right; font-weight: 600; white-space: nowrap; }
+  td.amount.in { color: var(--good-text); }
+  td { white-space: nowrap; }
+  td.purpose { color: var(--text-muted); max-width: 360px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  tr:hover td { background: color-mix(in srgb, var(--surface-2) 60%, transparent); }
+  .tag { display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 99px; background: var(--surface-2); color: var(--text-secondary); margin-left: 6px; white-space: nowrap; }
+  .tag.doubt { background: color-mix(in srgb, var(--warning) 25%, transparent); color: #8a5d00; }
+  .tag.open { background: color-mix(in srgb, var(--critical) 15%, transparent); color: var(--critical-text); }
+  .more { margin-top: 10px; text-align: center; }
+  footer { color: var(--text-muted); font-size: 12px; margin-top: 22px; text-align: center; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">🦊</div>
+      <div>
+        <h1>Fuxbau · Bauplan</h1>
+        <p id="stand"></p>
+      </div>
+    </div>
+    <button class="icon-btn" id="theme" title="Hell/Dunkel umschalten">◐ Ansicht</button>
+  </header>
+
+  <nav class="filters" aria-label="Filter">
+    <select id="year" aria-label="Jahr"></select>
+    <div class="months" id="months" role="tablist" aria-label="Monat"></div>
+    <select id="category" aria-label="Kategorie"><option value="">Alle Kategorien</option></select>
+    <span id="active-chips"></span>
+    <span class="spacer"></span>
+    <span class="scope" id="scope"></span>
+  </nav>
+
+  <section class="kpis" id="kpis"></section>
+
+  <section class="grid">
+    <article class="card span-8">
+      <div class="card-head">
+        <div><h2>Monatsverlauf</h2><p class="sub">Einnahmen und Ausgaben je Monat, Strich = Plan. Klick auf einen Monat filtert alles.</p></div>
+        <div class="legend"><span><i style="background:var(--income)"></i>Einnahmen</span><span><i style="background:var(--expense)"></i>Ausgaben</span><span><i class="line" style="background:var(--plan)"></i>Plan</span></div>
+      </div>
+      <div class="chart h-320" id="chart-months"></div>
+    </article>
+    <article class="card span-4">
+      <div class="card-head"><div><h2>Auffälligkeiten</h2><p class="sub" id="insights-scope"></p></div></div>
+      <ul class="insights" id="insights"></ul>
+    </article>
+
+    <article class="card span-6">
+      <div class="card-head"><div><h2>Saldo je Monat</h2><p class="sub">Einnahmen minus Ausgaben (inkl. Sparen)</p></div></div>
+      <div class="chart h-220" id="chart-balance"></div>
+    </article>
+    <article class="card span-6">
+      <div class="card-head">
+        <div><h2>Saldo kumuliert</h2><p class="sub">Aufgelaufener Überschuss seit Jahresbeginn gegen Plan</p></div>
+        <div class="legend"><span><i class="line" style="background:var(--income)"></i>Ist</span><span><i class="line" style="background:var(--plan)"></i>Plan</span></div>
+      </div>
+      <div class="chart h-220" id="chart-cumulative"></div>
+    </article>
+
+    <article class="card span-7">
+      <div class="card-head">
+        <div><h2>Plan vs. Ist nach Kategorie</h2><p class="sub">Ausgaben im gewählten Zeitraum. Klick wählt die Kategorie.</p></div>
+        <div class="legend"><span><i style="background:var(--expense)"></i>Ist</span><span><i class="line" style="background:var(--plan)"></i>Plan</span><span>▲ über Plan</span></div>
+      </div>
+      <div class="chart h-360" id="chart-categories"></div>
+    </article>
+    <article class="card span-5">
+      <div class="card-head"><div><h2>Wohin geht das Geld?</h2><p class="sub">Ausgaben nach Kategorie und Planzeile</p></div></div>
+      <div class="chart h-360" id="chart-treemap"></div>
+    </article>
+
+    <article class="card span-7">
+      <div class="card-head">
+        <div><h2>Größte Effekte auf den Saldo</h2><p class="sub">Planzeilen mit der größten Abweichung. Rot kostet Geld, Blau bringt Luft. Klick zeigt die Buchungen.</p></div>
+      </div>
+      <div class="chart h-360" id="chart-effects"></div>
+    </article>
+    <article class="card span-5">
+      <div class="card-head">
+        <div><h2>Fixkosten-Topf</h2><p class="sub">Eingezahlt vs. erstattet, Linie = Topf seit Jahresbeginn</p></div>
+        <div class="legend"><span><i style="background:var(--income)"></i>Eingezahlt</span><span><i style="background:var(--expense)"></i>Erstattet</span><span><i class="line" style="background:var(--text-primary)"></i>Saldo</span></div>
+      </div>
+      <div class="chart h-360" id="chart-pot"></div>
+    </article>
+
+    <article class="card span-12">
+      <div class="card-head">
+        <div><h2>Buchungen</h2><p class="sub" id="table-scope"></p></div>
+        <div class="table-tools">
+          <input type="search" id="search" placeholder="Suchen: Gegenseite, Zweck, Planzeile …">
+          <label class="toggle"><input type="checkbox" id="only-doubts"> nur Zweifel</label>
+          <label class="toggle"><input type="checkbox" id="only-open"> nur offen</label>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th data-sort="date">Datum</th><th data-sort="counterparty">Gegenseite</th><th>Verwendungszweck</th>
+            <th data-sort="line">Planzeile</th><th data-sort="category">Kategorie</th><th data-sort="amount" style="text-align:right">Betrag</th>
+          </tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+      <div class="more" id="more"></div>
+    </article>
+  </section>
+  <footer id="footer"></footer>
+</div>
+
+<script>
+window.BAUPLAN_DATA = /*__BAUPLAN_DATA__*/null;
+</script>
+<script>
+(() => {
+  "use strict";
+  const DATA = window.BAUPLAN_DATA;
+  const MONTH_NAMES = ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"];
+  const INCOME = "Einnahme", EXPENSE = "Ausgabe";
+  const UNPLANNED_CATEGORY = "Ungeplant";
+  const FIXED_COSTS_TRANSFER_LINE = "umbuchung";
+  const DOUBT_PREFIX = "ZWEIFEL";
+  const PAGE_SIZE = 150;
+  const TOP_EFFECTS = 12;
+
+  const euro = new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
+  const euroExact = new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" });
+  const percent = new Intl.NumberFormat("de-DE", { style: "percent", maximumFractionDigits: 0 });
+  const dateFormat = new Intl.DateTimeFormat("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
+
+  // ---------- model ----------
+  const planById = new Map(DATA.plan.map(line => [line.id, line]));
+  const transactions = DATA.transactions.map(t => {
+    const line = planById.get(t.line);
+    return {
+      ...t,
+      year: +t.date.slice(0, 4),
+      month: +t.date.slice(5, 7),
+      lineName: line ? line.description : (t.line || "– offen –"),
+      category: line ? line.category : "– offen –",
+      type: line ? line.type : (t.amount >= 0 ? INCOME : EXPENSE),
+      isDoubt: t.note.startsWith(DOUBT_PREFIX),
+      isOpen: !t.line,
+    };
+  });
+  const years = [...new Set(transactions.map(t => t.year))].sort();
+  const categories = [...new Set(DATA.plan.map(l => l.category))];
+
+  const state = {
+    year: years[years.length - 1],
+    month: null,
+    category: "",
+    line: "",
+    search: "",
+    onlyDoubts: false,
+    onlyOpen: false,
+    sort: { key: "date", descending: true },
+    visibleRows: PAGE_SIZE,
+  };
+
+  const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  const pad = n => String(n).padStart(2, "0");
+  const sum = (items, pick) => items.reduce((total, item) => total + pick(item), 0);
+
+  function lastDataMonth(year) {
+    const months = transactions.filter(t => t.year === year).map(t => t.month);
+    return months.length ? Math.max(...months) : 12;
+  }
+  function monthsInScope() {
+    if (state.month) return [state.month];
+    return Array.from({ length: lastDataMonth(state.year) }, (_, i) => i + 1);
+  }
+  function isValidIn(line, year, month) {
+    const start = `${year}-${pad(month)}-01`, end = `${year}-${pad(month)}-31`;
+    return (!line.validFrom || line.validFrom <= end) && (!line.validUntil || line.validUntil >= start);
+  }
+  function matchesCategory(category) { return !state.category || state.category === category; }
+  /** Unplanned means: the plan line carries no amount (or the transaction has no line yet). */
+  function isUnplannedLine(lineId) {
+    const line = planById.get(lineId);
+    return !line || line.monthly === 0;
+  }
+
+  /** Signed effect of a transaction: income positive, spending positive as "spent". */
+  function spent(t) { return -t.amount; }
+
+  function planned(type, months, extraFilter = () => true) {
+    return sum(DATA.plan.filter(l => l.type === type && matchesCategory(l.category) && extraFilter(l)),
+      line => sum(months.filter(m => isValidIn(line, state.year, m)), () => line.monthly));
+  }
+  function transactionsIn(months, { ignoreCategory = false } = {}) {
+    return transactions.filter(t => t.year === state.year && months.includes(t.month)
+      && (ignoreCategory || matchesCategory(t.category)));
+  }
+  function totals(months) {
+    const items = transactionsIn(months);
+    const income = sum(items.filter(t => t.type === INCOME), t => t.amount);
+    const expenses = sum(items.filter(t => t.type === EXPENSE), spent);
+    const savings = sum(items.filter(t => t.category === "Sparen"), spent);
+    const unplanned = sum(items.filter(t => t.type === EXPENSE && isUnplannedLine(t.line)), spent);
+    return {
+      income, expenses, savings, unplanned, balance: income - expenses,
+      planIncome: planned(INCOME, months), planExpenses: planned(EXPENSE, months),
+      planSavings: planned(EXPENSE, months, l => l.category === "Sparen"),
+    };
+  }
+  function perLine(months) {
+    const items = transactionsIn(months);
+    return DATA.plan.filter(l => (l.type === INCOME || l.type === EXPENSE) && matchesCategory(l.category)).map(line => {
+      const lineItems = items.filter(t => t.line === line.id);
+      const actual = line.type === INCOME ? sum(lineItems, t => t.amount) : sum(lineItems, spent);
+      const plan = sum(months.filter(m => isValidIn(line, state.year, m)), () => line.monthly);
+      const effect = line.type === INCOME ? actual - plan : plan - actual;
+      return { line, actual, plan, effect, count: lineItems.length };
+    });
+  }
+
+  // ---------- charts ----------
+  const charts = {};
+  let sparklines = [];
+  function chart(id) {
+    if (!charts[id]) charts[id] = echarts.init(document.getElementById(id), null, { renderer: "svg" });
+    return charts[id];
+  }
+  function baseTextStyle() { return { fontFamily: "-apple-system, BlinkMacSystemFont, Segoe UI, system-ui, sans-serif", color: css("--text-secondary") }; }
+  function tooltip(extra = {}) {
+    return {
+      backgroundColor: css("--surface-1"), borderColor: css("--border"), borderWidth: 1,
+      textStyle: { color: css("--text-primary"), fontSize: 12.5 }, extraCssText: "border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,.12);",
+      ...extra,
+    };
+  }
+  function valueAxis(extra = {}) {
+    return {
+      type: "value", axisLabel: { color: css("--text-muted"), formatter: v => compact(v) },
+      splitLine: { lineStyle: { color: css("--grid") } }, axisLine: { show: false }, axisTick: { show: false }, ...extra,
+    };
+  }
+  function categoryAxis(data, extra = {}) {
+    return {
+      type: "category", data, axisLine: { lineStyle: { color: css("--border") } }, axisTick: { show: false },
+      axisLabel: { color: css("--text-secondary") }, ...extra,
+    };
+  }
+  function compact(value) {
+    const abs = Math.abs(value);
+    if (abs >= 1000) return `${(value / 1000).toLocaleString("de-DE", { maximumFractionDigits: 1 })} T€`;
+    return `${Math.round(value)} €`;
+  }
+
+  function renderMonths() {
+    const months = Array.from({ length: 12 }, (_, i) => i + 1);
+    const last = lastDataMonth(state.year);
+    const data = months.map(m => m <= last ? totals([m]) : null);
+    const dim = m => state.month && state.month !== m;
+    const bar = (key, color) => data.map((d, i) => d === null ? null : {
+      value: Math.round(d[key]),
+      itemStyle: { color, opacity: dim(i + 1) ? .28 : 1, borderRadius: [4, 4, 0, 0] },
+    });
+    const planMarks = key => data.map(d => d === null ? null : Math.round(d[key]));
+    chart("chart-months").setOption({
+      textStyle: baseTextStyle(), animationDuration: 500,
+      grid: { left: 52, right: 12, top: 16, bottom: 28 },
+      tooltip: tooltip({ trigger: "axis", axisPointer: { type: "shadow", shadowStyle: { color: css("--surface-2") } },
+        formatter: params => monthTooltip(params[0].dataIndex, data) }),
+      xAxis: categoryAxis(MONTH_NAMES),
+      yAxis: valueAxis(),
+      series: [
+        { name: "Einnahmen", type: "bar", data: bar("income", css("--income")), barMaxWidth: 18, barGap: "12%" },
+        { name: "Ausgaben", type: "bar", data: bar("expenses", css("--expense")), barMaxWidth: 18 },
+        { name: "Plan Einnahmen", type: "scatter", data: planMarks("planIncome"), symbol: "rect", symbolSize: [20, 2],
+          symbolOffset: ["-60%", 0], itemStyle: { color: css("--plan") }, z: 5, silent: true },
+        { name: "Plan Ausgaben", type: "scatter", data: planMarks("planExpenses"), symbol: "rect", symbolSize: [20, 2],
+          symbolOffset: ["60%", 0], itemStyle: { color: css("--plan") }, z: 5, silent: true },
+      ],
+    }, true);
+  }
+  function monthTooltip(index, data) {
+    const d = data[index];
+    if (!d) return `<b>${MONTH_NAMES[index]} ${state.year}</b><br>noch keine Daten`;
+    const row = (label, value, plan) => `<tr><td style="padding-right:14px">${label}</td><td style="text-align:right"><b>${euro.format(value)}</b></td>${plan === undefined ? "" : `<td style="padding-left:10px;color:${css("--text-muted")}">Plan ${euro.format(plan)}</td>`}</tr>`;
+    return `<b>${MONTH_NAMES[index]} ${state.year}</b><table style="margin-top:4px">${row("Einnahmen", d.income, d.planIncome)}${row("Ausgaben", d.expenses, d.planExpenses)}${row("Saldo", d.balance, d.planIncome - d.planExpenses)}</table>`;
+  }
+
+  function renderBalance() {
+    const last = lastDataMonth(state.year);
+    const values = MONTH_NAMES.map((_, i) => i + 1 <= last ? totals([i + 1]).balance : null);
+    chart("chart-balance").setOption({
+      textStyle: baseTextStyle(), grid: { left: 52, right: 12, top: 12, bottom: 28 },
+      tooltip: tooltip({ trigger: "axis", axisPointer: { type: "shadow", shadowStyle: { color: css("--surface-2") } },
+        formatter: p => p[0].value === null || p[0].value === undefined ? "" : `<b>${MONTH_NAMES[p[0].dataIndex]}</b><br>Saldo ${p[0].value >= 0 ? "▲" : "▼"} <b>${euro.format(p[0].value)}</b>` }),
+      xAxis: categoryAxis(MONTH_NAMES), yAxis: valueAxis(),
+      series: [{
+        type: "bar", barMaxWidth: 22,
+        data: values.map((v, i) => v === null ? null : {
+          value: Math.round(v),
+          itemStyle: {
+            color: v >= 0 ? css("--good") : css("--critical"), opacity: state.month && state.month !== i + 1 ? .28 : 1,
+            borderRadius: v >= 0 ? [4, 4, 0, 0] : [0, 0, 4, 4],
+          },
+        }),
+        label: { show: true, position: "top", formatter: p => p.value >= 0 ? "▲" : "▼", color: css("--text-muted"), fontSize: 10 },
+      }],
+    }, true);
+  }
+
+  function renderCumulative() {
+    const last = lastDataMonth(state.year);
+    let actualRunning = 0, planRunning = 0;
+    const actual = [], plan = [];
+    for (let m = 1; m <= 12; m++) {
+      const t = totals([m]);
+      planRunning += t.planIncome - t.planExpenses;
+      plan.push(Math.round(planRunning));
+      if (m <= last) { actualRunning += t.balance; actual.push(Math.round(actualRunning)); } else actual.push(null);
+    }
+    chart("chart-cumulative").setOption({
+      textStyle: baseTextStyle(), grid: { left: 52, right: 16, top: 12, bottom: 28 },
+      tooltip: tooltip({ trigger: "axis", axisPointer: { type: "line", lineStyle: { color: css("--border") } },
+        valueFormatter: v => v === null || v === undefined ? "–" : euro.format(v) }),
+      xAxis: categoryAxis(MONTH_NAMES, { boundaryGap: false }), yAxis: valueAxis(),
+      series: [
+        { name: "Plan", type: "line", data: plan, symbol: "none", lineStyle: { width: 2, type: [6, 4], color: css("--plan") } },
+        { name: "Ist", type: "line", data: actual, symbol: "circle", symbolSize: 8, lineStyle: { width: 2, color: css("--income") },
+          itemStyle: { color: css("--income"), borderColor: css("--surface-1"), borderWidth: 2 },
+          areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: css("--income") + "33" }, { offset: 1, color: css("--income") + "00" }]) },
+          endLabel: { show: true, formatter: p => euro.format(p.value), color: css("--text-primary"), fontWeight: 600, distance: 6 } },
+      ],
+    }, true);
+  }
+
+  function renderCategories() {
+    const months = monthsInScope();
+    const rows = categories.filter(c => c !== "Einnahmen" && c !== "Umbuchung").map(category => {
+      const items = transactionsIn(months, { ignoreCategory: true }).filter(t => t.category === category && t.type === EXPENSE);
+      const plan = sum(DATA.plan.filter(l => l.category === category && l.type === EXPENSE),
+        line => sum(months.filter(m => isValidIn(line, state.year, m)), () => line.monthly));
+      return { category, actual: sum(items, spent), plan };
+    }).filter(r => r.actual || r.plan).sort((a, b) => b.actual - a.actual);
+    const names = rows.map(r => r.category).reverse();
+    const ordered = [...rows].reverse();
+    // The deviation sits in its own column at the right edge, clear of bars and plan ticks.
+    const deviations = ordered.map(r => {
+      if (!r.plan) return `{bad|${euro.format(r.actual)}} {muted|ungeplant}`;
+      const d = r.actual - r.plan;
+      return `{${d > 0 ? "bad" : "good"}|${d > 0 ? "▲" : "▼"} ${euro.format(Math.abs(d))}} {muted|${percent.format(Math.abs(d) / r.plan)}}`;
+    });
+    chart("chart-categories").setOption({
+      textStyle: baseTextStyle(), grid: { left: 120, right: 150, top: 6, bottom: 24 },
+      tooltip: tooltip({ trigger: "axis", axisPointer: { type: "shadow", shadowStyle: { color: css("--surface-2") } },
+        formatter: p => { const r = ordered[p[0].dataIndex]; const d = r.actual - r.plan;
+          return `<b>${r.category}</b><br>Ist <b>${euro.format(r.actual)}</b><br>Plan ${euro.format(r.plan)}<br>${d > 0 ? "▲ über" : "▼ unter"} Plan: <b>${euro.format(Math.abs(d))}</b>`; } }),
+      xAxis: valueAxis(),
+      yAxis: [
+        categoryAxis(names, { axisLabel: { color: css("--text-secondary"), width: 110, overflow: "truncate" } }),
+        categoryAxis(deviations, { position: "right", axisLine: { show: false },
+          axisLabel: { align: "right", margin: 140, width: 140,
+            rich: { bad: { color: css("--critical-text"), fontWeight: 600, fontSize: 12 },
+                    good: { color: css("--good-text"), fontWeight: 600, fontSize: 12 },
+                    muted: { color: css("--text-muted"), fontSize: 11.5 } } } }),
+      ],
+      series: [
+        { type: "bar", barMaxWidth: 14, data: ordered.map(r => ({
+            value: Math.round(r.actual),
+            itemStyle: { color: css("--expense"), borderRadius: [0, 4, 4, 0],
+              opacity: state.category && state.category !== r.category ? .3 : 1 } })) },
+        { type: "scatter", data: ordered.map(r => Math.round(r.plan)), symbol: "rect", symbolSize: [2, 20],
+          itemStyle: { color: css("--plan") }, z: 5, silent: true },
+      ],
+    }, true);
+  }
+
+  function renderTreemap() {
+    const items = transactionsIn(monthsInScope()).filter(t => t.type === EXPENSE);
+    const byCategory = new Map();
+    for (const t of items) {
+      if (!byCategory.has(t.category)) byCategory.set(t.category, new Map());
+      const lines = byCategory.get(t.category);
+      lines.set(t.lineName, (lines.get(t.lineName) || 0) + spent(t));
+    }
+    const data = [...byCategory].map(([category, lines]) => ({
+      name: category,
+      children: [...lines].filter(([, v]) => v > 0).map(([name, value]) => ({ name, value: Math.round(value) })),
+    })).filter(c => c.children.length);
+    // Dark blue steps in both modes: white labels need contrast on every tile.
+    const steps = ["#104281", "#184f95", "#1c5cab", "#256abf"];
+    chart("chart-treemap").setOption({
+      textStyle: baseTextStyle(),
+      tooltip: tooltip({ formatter: p => `<b>${p.treePathInfo.slice(1).map(n => n.name).join(" › ")}</b><br>${euro.format(p.value)}` }),
+      series: [{
+        type: "treemap", data, roam: false, nodeClick: "zoomToNode", width: "100%", height: "88%", top: 0,
+        breadcrumb: { show: true, bottom: 0, itemStyle: { color: css("--surface-2"), borderColor: css("--border"), textStyle: { color: css("--text-secondary") } } },
+        label: { show: true, formatter: p => `${p.name}\n${euro.format(p.value)}`, color: "#fff", fontSize: 11.5, lineHeight: 15 },
+        upperLabel: { show: true, height: 22, color: "#fff", fontWeight: 600, fontSize: 12 },
+        itemStyle: { borderColor: css("--surface-1"), borderWidth: 2, gapWidth: 2, borderRadius: 4 },
+        levels: [
+          { itemStyle: { borderWidth: 0, gapWidth: 4 }, upperLabel: { show: false }, color: steps },
+          { itemStyle: { borderWidth: 3, borderColor: "#2b3a4d", gapWidth: 2 }, upperLabel: { show: true } },
+          { itemStyle: { borderWidth: 0, gapWidth: 2 } },
+        ],
+      }],
+    }, true);
+  }
+
+  function renderEffects() {
+    const rows = perLine(monthsInScope()).filter(r => Math.abs(r.effect) >= 1)
+      .sort((a, b) => Math.abs(b.effect) - Math.abs(a.effect)).slice(0, TOP_EFFECTS).reverse();
+    // Room beyond the longest bar on each side, so the value labels stay inside the plot.
+    const labelRoom = 1.45;
+    const lowest = Math.min(0, ...rows.map(r => r.effect)) * labelRoom;
+    const highest = Math.max(0, ...rows.map(r => r.effect)) * labelRoom;
+    chart("chart-effects").setOption({
+      textStyle: baseTextStyle(), grid: { left: 210, right: 24, top: 6, bottom: 24 },
+      tooltip: tooltip({ trigger: "axis", axisPointer: { type: "shadow", shadowStyle: { color: css("--surface-2") } },
+        formatter: p => { const r = rows[p[0].dataIndex];
+          return `<b>${r.line.description}</b> <span style="color:${css("--text-muted")}">${r.line.category}</span><br>Ist ${euro.format(r.actual)} · Plan ${euro.format(r.plan)}<br>${r.effect < 0 ? "▼ kostet" : "▲ spart"} <b>${euro.format(Math.abs(r.effect))}</b> · ${r.count} Buchungen`; } }),
+      xAxis: valueAxis({ min: Math.floor(lowest / 1000) * 1000, max: Math.ceil(highest / 1000) * 1000 }),
+      yAxis: categoryAxis(rows.map(r => r.line.description), { axisLabel: { color: css("--text-secondary"), width: 200, overflow: "truncate" } }),
+      series: [{
+        type: "bar", barMaxWidth: 14,
+        data: rows.map(r => ({ value: Math.round(r.effect),
+          itemStyle: { color: r.effect < 0 ? css("--critical") : css("--income"), borderRadius: r.effect < 0 ? [4, 0, 0, 4] : [0, 4, 4, 0] },
+          label: { position: r.effect < 0 ? "left" : "right" } })),
+        label: { show: true, formatter: p => `${p.value < 0 ? "▼" : "▲"} ${euro.format(Math.abs(p.value))}`, color: css("--text-secondary"), fontSize: 11.5 },
+      }],
+    }, true);
+    charts["chart-effects"].__rows = rows;
+  }
+
+  function renderPot() {
+    const last = lastDataMonth(state.year);
+    const transfers = transactions.filter(t => t.year === state.year && t.line === FIXED_COSTS_TRANSFER_LINE);
+    const paidIn = [], refunded = [], running = [];
+    let balance = 0;
+    for (let m = 1; m <= 12; m++) {
+      const items = transfers.filter(t => t.month === m);
+      const inMonth = sum(items.filter(t => t.amount < 0), t => -t.amount);
+      const outMonth = sum(items.filter(t => t.amount > 0), t => t.amount);
+      balance += inMonth - outMonth;
+      paidIn.push(m <= last ? Math.round(inMonth) : null);
+      refunded.push(m <= last ? Math.round(outMonth) : null);
+      running.push(m <= last ? Math.round(balance) : null);
+    }
+    chart("chart-pot").setOption({
+      textStyle: baseTextStyle(), grid: { left: 52, right: 16, top: 12, bottom: 28 },
+      tooltip: tooltip({ trigger: "axis", axisPointer: { type: "shadow", shadowStyle: { color: css("--surface-2") } },
+        valueFormatter: v => v === null || v === undefined ? "–" : euro.format(v) }),
+      xAxis: categoryAxis(MONTH_NAMES), yAxis: valueAxis(),
+      series: [
+        { name: "Eingezahlt", type: "bar", data: paidIn, barMaxWidth: 12, itemStyle: { color: css("--income"), borderRadius: [4, 4, 0, 0] } },
+        { name: "Erstattet", type: "bar", data: refunded, barMaxWidth: 12, itemStyle: { color: css("--expense"), borderRadius: [4, 4, 0, 0] } },
+        { name: "Topf-Saldo", type: "line", data: running, symbol: "circle", symbolSize: 8, z: 5,
+          lineStyle: { width: 2, color: css("--text-primary") }, itemStyle: { color: css("--text-primary"), borderColor: css("--surface-1"), borderWidth: 2 },
+          endLabel: { show: true, formatter: p => euro.format(p.value), color: css("--text-primary"), fontWeight: 600 } },
+      ],
+    }, true);
+  }
+
+  // ---------- KPIs, insights, table ----------
+  /** A tile: plan === null means there is nothing to compare with, so no badge. */
+  function overviewTiles(t, monthly) {
+    return [
+      { label: "Einnahmen", color: "--income", value: t.income, plan: t.planIncome, higherIsGood: true, spark: monthly.map(m => m.income) },
+      { label: "Ausgaben", color: "--expense", value: t.expenses, plan: t.planExpenses, higherIsGood: false, spark: monthly.map(m => m.expenses) },
+      { label: "Saldo", color: "--good", value: t.balance, plan: t.planIncome - t.planExpenses, higherIsGood: true, spark: monthly.map(m => m.balance) },
+      { label: "Gespart (Sparen)", color: "--seq-4", value: t.savings, plan: t.planSavings, higherIsGood: true, spark: monthly.map(m => m.savings),
+        extra: `Sparquote ${percent.format(t.income ? t.savings / t.income : 0)}` },
+      { label: "Ungeplant", color: "--critical", value: t.unplanned, plan: null, spark: monthly.map(m => m.unplanned),
+        extra: t.expenses ? `${percent.format(t.unplanned / t.expenses)} der Ausgaben` : "" },
+    ];
+  }
+  function categoryTiles(t, monthly) {
+    const isIncome = state.category === "Einnahmen";
+    const actual = isIncome ? t.income : t.expenses;
+    const plan = isIncome ? t.planIncome : t.planExpenses;
+    const pick = m => isIncome ? m.income : m.expenses;
+    const monthCount = monthsInScope().length;
+    const allItems = transactionsIn(monthsInScope(), { ignoreCategory: true });
+    const allOfKind = isIncome ? sum(allItems.filter(x => x.type === INCOME), x => x.amount) : sum(allItems.filter(x => x.type === EXPENSE), spent);
+    const count = transactionsIn(monthsInScope()).length;
+    return [
+      { label: `Ist ${state.category}`, color: isIncome ? "--income" : "--expense", value: actual, plan, higherIsGood: isIncome, spark: monthly.map(pick) },
+      { label: "Ø pro Monat", color: isIncome ? "--income" : "--expense", value: actual / monthCount, plan: plan / monthCount, higherIsGood: isIncome, spark: monthly.map(pick) },
+      { label: isIncome ? "Anteil an allen Einnahmen" : "Anteil an allen Ausgaben", color: "--seq-4", value: allOfKind ? actual / allOfKind : 0, plan: null,
+        format: value => percent.format(value), spark: monthly.map(pick), extra: `von ${euro.format(allOfKind)}` },
+      { label: "davon ungeplant", color: "--critical", value: t.unplanned, plan: null, spark: monthly.map(m => m.unplanned),
+        extra: actual ? `${percent.format(t.unplanned / actual)} der Kategorie` : "" },
+      { label: "Buchungen", color: "--plan", value: count, plan: null, format: value => value.toLocaleString("de-DE"),
+        spark: monthly.map(pick), extra: count ? `Ø ${euro.format(actual / count)} je Buchung` : "" },
+    ];
+  }
+  function planBadge(tile, format) {
+    const delta = tile.value - tile.plan;
+    const isGood = tile.higherIsGood ? delta >= 0 : delta <= 0;
+    const kind = Math.abs(delta) < 1 ? "neutral" : isGood ? "good" : "bad";
+    return `<span class="badge ${kind}">${delta >= 0 ? "▲" : "▼"} ${format(Math.abs(delta))}</span><span>vs. Plan ${format(tile.plan)}</span>`;
+  }
+
+  function renderKpis() {
+    const t = totals(monthsInScope());
+    const last = lastDataMonth(state.year);
+    const monthly = Array.from({ length: last }, (_, i) => totals([i + 1]));
+    const tiles = state.category ? categoryTiles(t, monthly) : overviewTiles(t, monthly);
+    // The tiles are rebuilt on every filter change; their old chart instances must go with them.
+    sparklines.forEach(instance => instance.dispose());
+    document.getElementById("kpis").innerHTML = tiles.map((tile, i) => {
+      const format = tile.format || (value => euro.format(value));
+      return `<div class="card kpi"><div class="label"><i style="background:var(${tile.color})"></i>${escapeHtml(tile.label)}</div>
+        <div class="value num">${format(tile.value)}</div>
+        <div class="delta num">${tile.plan === null ? `<span>${tile.extra || ""}</span>` : planBadge(tile, format)}</div>
+        ${tile.extra && tile.plan !== null ? `<div class="delta">${tile.extra}</div>` : ""}
+        <div class="spark" id="spark-${i}"></div></div>`;
+    }).join("");
+    tiles.forEach((tile, i) => {
+      const element = document.getElementById(`spark-${i}`);
+      const instance = echarts.init(element, null, { renderer: "svg" });
+      sparklines[i] = instance;
+      instance.setOption({
+        grid: { left: 0, right: 0, top: 4, bottom: 2 },
+        xAxis: { type: "category", show: false, data: tile.spark.map((_, j) => MONTH_NAMES[j]) },
+        yAxis: { type: "value", show: false, scale: true },
+        tooltip: tooltip({ trigger: "axis", valueFormatter: v => euro.format(v) }),
+        series: [{ type: "line", data: tile.spark.map(Math.round), symbol: "none", smooth: .3,
+          lineStyle: { width: 2, color: css(tile.color) },
+          areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: css(tile.color) + "30" }, { offset: 1, color: css(tile.color) + "00" }]) },
+          markPoint: state.month ? { symbol: "circle", symbolSize: 7, itemStyle: { color: css(tile.color) }, label: { show: false },
+            data: [{ coord: [state.month - 1, Math.round(tile.spark[state.month - 1] || 0)] }] } : undefined }],
+      });
+    });
+  }
+
+  function categoryHeadline(t) {
+    const isIncome = state.category === "Einnahmen";
+    const actual = isIncome ? t.income : t.expenses, plan = isIncome ? t.planIncome : t.planExpenses;
+    const above = actual > plan, isGood = isIncome ? above : !above;
+    return { kind: isGood ? "good" : "bad", icon: above ? "▲" : "▼",
+      html: `${escapeHtml(state.category)} <b>${euro.format(actual)}</b> – <b>${euro.format(Math.abs(actual - plan))}</b> ${above ? "über" : "unter"} Plan.` };
+  }
+
+  function renderInsights() {
+    const months = monthsInScope();
+    const t = totals(months);
+    const lines = perLine(months);
+    const overspent = lines.filter(r => r.line.type === EXPENSE && r.plan > 0 && r.effect < -1).sort((a, b) => a.effect - b.effect).slice(0, 3);
+    const unplanned = lines.filter(r => r.line.type === EXPENSE && r.plan === 0 && r.actual > 1).sort((a, b) => b.actual - a.actual).slice(0, 3);
+    const savers = lines.filter(r => r.effect > 1).sort((a, b) => b.effect - a.effect).slice(0, 2);
+    const scoped = transactionsIn(months);
+    const doubts = scoped.filter(x => x.isDoubt).length, open = scoped.filter(x => x.isOpen).length;
+    const planBalance = t.planIncome - t.planExpenses;
+    const items = [];
+    items.push(state.category ? categoryHeadline(t) : {
+      kind: t.balance >= planBalance ? "good" : "bad", icon: t.balance >= planBalance ? "▲" : "▼",
+      html: `Saldo <b>${euro.format(t.balance)}</b> – ${t.balance >= planBalance ? "besser" : "schlechter"} als geplant um <b>${euro.format(Math.abs(t.balance - planBalance))}</b>.` });
+    if (overspent.length) items.push({ kind: "bad", icon: "!", html: `Über Plan: ${overspent.map(r =>
+      `<span class="link" data-line="${r.line.id}">${r.line.description}</span> <b>+${euro.format(-r.effect)}</b>`).join(", ")}.` });
+    if (unplanned.length) items.push({ kind: "bad", icon: "?", html: `Ungeplant <b>${euro.format(t.unplanned)}</b>, vor allem ${unplanned.map(r =>
+      `<span class="link" data-line="${r.line.id}">${r.line.description.replace(/ \(ungeplant\)/, "")}</span> ${euro.format(r.actual)}`).join(", ")}.` });
+    if (savers.length) items.push({ kind: "good", icon: "✓", html: `Entlastet: ${savers.map(r =>
+      `<span class="link" data-line="${r.line.id}">${r.line.description}</span> <b>+${euro.format(r.effect)}</b>`).join(", ")}.` });
+    if (doubts || open) items.push({ kind: "warn", icon: "≈", html: `<span class="link" data-doubts="1">${doubts} Buchungen mit Zweifel</span>${open ? `, ${open} offen` : ""} – Zuordnung prüfen.` });
+    if (!state.month && !state.category) {
+      const pot = transactions.filter(x => x.year === state.year && x.line === FIXED_COSTS_TRANSFER_LINE);
+      const potBalance = sum(pot, x => -x.amount);
+      if (potBalance < 0) items.push({ kind: "bad", icon: "↘", html: `Fixkosten-Topf seit Januar <b>${euro.format(potBalance)}</b> – es wird mehr erstattet als eingezahlt.` });
+    }
+    document.getElementById("insights-scope").textContent = scopeLabel();
+    document.getElementById("insights").innerHTML = items.map(i =>
+      `<li><span class="ico ${i.kind}" aria-hidden="true">${i.icon}</span><span>${i.html}</span></li>`).join("");
+  }
+
+  function tableRows() {
+    const query = state.search.trim().toLowerCase();
+    let rows = transactionsIn(monthsInScope());
+    if (state.line) rows = rows.filter(t => t.line === state.line);
+    if (state.onlyDoubts) rows = rows.filter(t => t.isDoubt);
+    if (state.onlyOpen) rows = rows.filter(t => t.isOpen);
+    if (query) rows = rows.filter(t => `${t.counterparty} ${t.purpose} ${t.lineName} ${t.category} ${t.note}`.toLowerCase().includes(query));
+    const { key, descending } = state.sort;
+    const direction = descending ? -1 : 1;
+    return rows.sort((a, b) => (a[key] > b[key] ? 1 : a[key] < b[key] ? -1 : 0) * direction);
+  }
+  function escapeHtml(text) {
+    return String(text).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+  }
+  function renderTable() {
+    const rows = tableRows();
+    const shown = rows.slice(0, state.visibleRows);
+    document.getElementById("rows").innerHTML = shown.map(t => `<tr>
+      <td class="num">${dateFormat.format(new Date(t.date))}</td>
+      <td>${escapeHtml(t.counterparty)}${t.isDoubt ? `<span class="tag doubt" title="${escapeHtml(t.note)}">Zweifel</span>` : ""}</td>
+      <td class="purpose" title="${escapeHtml(t.purpose)}">${escapeHtml(t.purpose)}</td>
+      <td>${escapeHtml(t.lineName)}${t.isOpen ? `<span class="tag open">offen</span>` : ""}</td>
+      <td>${escapeHtml(t.category)}</td>
+      <td class="amount num ${t.amount > 0 ? "in" : ""}">${euroExact.format(t.amount)}</td></tr>`).join("");
+    const total = sum(rows, t => t.amount);
+    document.getElementById("table-scope").textContent =
+      `${rows.length} Buchungen · Summe ${euroExact.format(total)} · ${scopeLabel()}${state.line ? ` · Planzeile: ${planById.get(state.line)?.description ?? state.line}` : ""}`;
+    document.getElementById("more").innerHTML = rows.length > shown.length
+      ? `<button class="icon-btn" id="show-more">${rows.length - shown.length} weitere anzeigen</button>` : "";
+  }
+
+  // ---------- filters & wiring ----------
+  function scopeLabel() {
+    const period = state.month ? `${MONTH_NAMES[state.month - 1]} ${state.year}` : `Jan–${MONTH_NAMES[lastDataMonth(state.year) - 1]} ${state.year}`;
+    return state.category ? `${period} · ${state.category}` : period;
+  }
+  function renderFilters() {
+    const last = lastDataMonth(state.year);
+    document.getElementById("months").innerHTML =
+      `<button class="${state.month ? "" : "active"}" data-month="">Jahr</button>` +
+      MONTH_NAMES.map((name, i) => `<button class="${state.month === i + 1 ? "active" : ""}" data-month="${i + 1}" ${i + 1 > last ? "disabled" : ""}>${name}</button>`).join("");
+    document.getElementById("category").value = state.category;
+    const chips = [];
+    if (state.line) chips.push(`<span class="chip">Planzeile: ${escapeHtml(planById.get(state.line)?.description ?? state.line)} <button data-clear="line" aria-label="Filter entfernen">×</button></span>`);
+    document.getElementById("active-chips").innerHTML = chips.join("");
+    document.getElementById("scope").textContent = scopeLabel();
+  }
+  function renderAll() {
+    renderFilters(); renderKpis(); renderMonths(); renderInsights(); renderBalance(); renderCumulative();
+    renderCategories(); renderTreemap(); renderEffects(); renderPot(); renderTable();
+  }
+  function update(changes) {
+    Object.assign(state, changes, { visibleRows: PAGE_SIZE });
+    renderAll();
+  }
+
+  function wire() {
+    const yearSelect = document.getElementById("year");
+    yearSelect.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join("");
+    yearSelect.value = state.year;
+    yearSelect.addEventListener("change", e => update({ year: +e.target.value, month: null }));
+    const categorySelect = document.getElementById("category");
+    categorySelect.innerHTML += categories.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
+    categorySelect.addEventListener("change", e => update({ category: e.target.value, line: "" }));
+    document.getElementById("months").addEventListener("click", e => {
+      const button = e.target.closest("button[data-month]");
+      if (button && !button.disabled) update({ month: button.dataset.month ? +button.dataset.month : null });
+    });
+    document.getElementById("active-chips").addEventListener("click", e => {
+      if (e.target.dataset.clear) update({ [e.target.dataset.clear]: "" });
+    });
+    document.getElementById("insights").addEventListener("click", e => {
+      if (e.target.dataset.line) { update({ line: e.target.dataset.line }); scrollToTable(); }
+      if (e.target.dataset.doubts) { document.getElementById("only-doubts").checked = true; update({ onlyDoubts: true }); scrollToTable(); }
+    });
+    document.getElementById("search").addEventListener("input", e => { state.search = e.target.value; state.visibleRows = PAGE_SIZE; renderTable(); });
+    document.getElementById("only-doubts").addEventListener("change", e => { state.onlyDoubts = e.target.checked; renderTable(); });
+    document.getElementById("only-open").addEventListener("change", e => { state.onlyOpen = e.target.checked; renderTable(); });
+    document.querySelector("thead").addEventListener("click", e => {
+      const key = e.target.dataset.sort; if (!key) return;
+      state.sort = { key, descending: state.sort.key === key ? !state.sort.descending : true }; renderTable();
+    });
+    document.getElementById("more").addEventListener("click", e => {
+      if (e.target.id === "show-more") { state.visibleRows += PAGE_SIZE; renderTable(); }
+    });
+    document.getElementById("theme").addEventListener("click", () => {
+      const root = document.documentElement;
+      const isDark = root.dataset.theme ? root.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+      root.dataset.theme = isDark ? "light" : "dark";
+      try { localStorage.setItem("bauplan-theme", root.dataset.theme); } catch (error) { /* private mode: theme just is not remembered */ }
+      renderAll();
+    });
+    chart("chart-months").on("click", p => update({ month: state.month === p.dataIndex + 1 ? null : p.dataIndex + 1 }));
+    chart("chart-balance").on("click", p => update({ month: state.month === p.dataIndex + 1 ? null : p.dataIndex + 1 }));
+    chart("chart-categories").on("click", p => {
+      const name = charts["chart-categories"].getOption().yAxis[0].data[p.dataIndex];
+      update({ category: state.category === name ? "" : name, line: "" });
+    });
+    chart("chart-effects").on("click", p => { const r = charts["chart-effects"].__rows[p.dataIndex]; update({ line: r.line.id }); scrollToTable(); });
+    window.addEventListener("resize", () => [...Object.values(charts), ...sparklines].forEach(c => c.resize()));
+  }
+  function scrollToTable() { document.getElementById("rows").closest(".card").scrollIntoView({ behavior: "smooth", block: "start" }); }
+
+  try { const saved = localStorage.getItem("bauplan-theme"); if (saved) document.documentElement.dataset.theme = saved; } catch (error) { /* no storage */ }
+  const lastDate = transactions.reduce((max, t) => t.date > max ? t.date : max, "");
+  document.getElementById("stand").textContent =
+    `Daten bis ${lastDate ? dateFormat.format(new Date(lastDate)) : "–"} · ${transactions.length.toLocaleString("de-DE")} Buchungen · ${DATA.plan.length} Planzeilen`;
+  document.getElementById("footer").textContent =
+    `Erstellt ${new Date(DATA.generatedAt).toLocaleString("de-DE")} aus dem Google Sheet · lokal, nicht veröffentlicht`;
+  wire();
+  renderAll();
+})();
+</script>
+</body>
+</html>

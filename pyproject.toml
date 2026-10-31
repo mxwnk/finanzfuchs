@@ -1,0 +1,38 @@
+[project]
+name = "bauplan"
+version = "0.1.0"
+description = "Plan vs. actual of the Fuxbau family budget, fed from the DKB accounts via Enable Banking"
+requires-python = ">=3.13"
+dependencies = [
+    "httpx>=0.28.1",
+    "pyjwt[crypto]>=2.15.1",
+]
+
+[project.scripts]
+bauplan = "bauplan.cli:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "ruff>=0.16.10",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["bauplan"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM", "N"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["bauplan"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
