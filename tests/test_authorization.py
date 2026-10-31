@@ -5,7 +5,7 @@ import pytest
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 
-from bauplan.banking.authorization import (
+from finanzfuchs.banking.authorization import (
     DEFAULT_CONSENT_VALIDITY,
     AuthorizationRedirectError,
     build_application_token,
@@ -93,21 +93,21 @@ class TestConsentEnd:
 
 class TestAuthorizationCode:
     def test_reads_the_code_from_the_redirect_url(self) -> None:
-        redirect = "https://fuxbau.org/bauplan/callback?state=state-1&code=code-123"
+        redirect = "https://example.org/finanzfuchs/callback?state=state-1&code=code-123"
 
         code = read_authorization_code(redirect, expected_state="state-1")
 
         assert code == "code-123"
 
     def test_rejects_a_redirect_from_another_authorization(self) -> None:
-        redirect = "https://fuxbau.org/bauplan/callback?state=other&code=code-123"
+        redirect = "https://example.org/finanzfuchs/callback?state=other&code=code-123"
 
         with pytest.raises(AuthorizationRedirectError, match="state"):
             read_authorization_code(redirect, expected_state="state-1")
 
     def test_reports_the_error_the_bank_sent_back(self) -> None:
         redirect = (
-            "https://fuxbau.org/bauplan/callback?state=state-1"
+            "https://example.org/finanzfuchs/callback?state=state-1"
             "&error=access_denied&error_description=User+cancelled"
         )
 
@@ -115,7 +115,7 @@ class TestAuthorizationCode:
             read_authorization_code(redirect, expected_state="state-1")
 
     def test_rejects_a_redirect_without_code(self) -> None:
-        redirect = "https://fuxbau.org/bauplan/callback?state=state-1"
+        redirect = "https://example.org/finanzfuchs/callback?state=state-1"
 
         with pytest.raises(AuthorizationRedirectError, match="code"):
             read_authorization_code(redirect, expected_state="state-1")

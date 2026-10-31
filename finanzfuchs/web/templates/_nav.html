@@ -1,0 +1,11 @@
+<nav class="nav" aria-label="Bereiche">
+  <a href="/" class="{{ 'active' if active == 'overview' }}">Übersicht</a>
+  <a href="/zuordnen" class="{{ 'active' if active == 'assign' }}">Zuordnen{% if attention %} <span class="count">{{ attention }}</span>{% endif %}</a>
+  <a href="/import" class="{{ 'active' if active == 'import' }}">Import</a>
+  <a href="/plan" class="{{ 'active' if active == 'plan' }}">Plan</a>
+  <a href="/export.xlsx">Excel</a>
+</nav>
+<div class="nav-user">
+  <span>{{ user.name }}</span>
+  <form method="post" action="/auth/logout"><button type="submit">Abmelden</button></form>
+</div>

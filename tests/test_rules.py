@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from bauplan.assignment.rules import AssignmentRule, RuleFileError, assign, load_rules
-from bauplan.banking.transactions import BankTransaction
+from finanzfuchs.assignment.rules import AssignmentRule, RuleFileError, assign, load_rules
+from finanzfuchs.banking.transactions import BankTransaction
 
 
 def transaction(

@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Finanzfuchs{% endblock %} · Finanzfuchs</title>
+<link rel="stylesheet" href="/static/app.css">
+<script>
+  try { const theme = localStorage.getItem("bauplan-theme"); if (theme) document.documentElement.dataset.theme = theme; } catch (error) { /* no storage: follow the system */ }
+</script>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="/">
+      <div class="logo" aria-hidden="true">🦊</div>
+      <div><h1>Finanzfuchs</h1><p>{% block subtitle %}Plan vs. Ist der Familie{% endblock %}</p></div>
+    </a>
+    {% if user %}<div class="top-right">{% include "_nav.html" %}</div>{% endif %}
+  </header>
+  {% block content %}{% endblock %}
+</div>
+{% block scripts %}{% endblock %}
+</body>
+</html>

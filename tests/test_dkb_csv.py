@@ -3,7 +3,7 @@ from decimal import Decimal
 
 import pytest
 
-from bauplan.imports.dkb_csv import DkbExportError, parse_dkb_export
+from finanzfuchs.imports.dkb_csv import DkbExportError, parse_dkb_export
 
 HEADER = (
     '"Girokonto";"DE00111111110000000001"\n'

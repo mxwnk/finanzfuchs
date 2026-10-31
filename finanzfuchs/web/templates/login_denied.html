@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Kein Zugang{% endblock %}
+{% block content %}
+<article class="card narrow">
+  <h2>Anmeldung nicht möglich</h2>
+  <p>Die Anmeldung über Pocket ID ist abgelaufen, wurde abgebrochen, oder euer Konto ist nicht in der Familiengruppe.</p>
+  <a class="button primary" href="/auth/login">Noch einmal anmelden</a>
+</article>
+{% endblock %}

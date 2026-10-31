@@ -1,0 +1,6 @@
+# The image needs only the package and its locked dependencies; never the private data folder.
+*
+!pyproject.toml
+!uv.lock
+!finanzfuchs
+finanzfuchs/**/__pycache__

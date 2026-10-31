@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from bauplan.archive import RawArchive
-from bauplan.config import ConfigError
+from finanzfuchs.archive import RawArchive
+from finanzfuchs.config import ConfigError
 
 FETCHED_AT = datetime(2026, 11, 1, 6, 0, 5, tzinfo=UTC)
 

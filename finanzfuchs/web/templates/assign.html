@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Zuordnen{% endblock %}
+{% block subtitle %}Buchungen, bei denen die Regeln nicht weiterwissen{% endblock %}
+{% block content %}
+<section class="assign" id="assign">
+  <div class="progress-row">
+    <h2 id="headline">Lade …</h2>
+    <div class="progress" aria-hidden="true"><div class="bar" id="bar"></div></div>
+  </div>
+
+  <div class="assign-grid">
+    <article class="card current" id="current" hidden>
+      <div class="current-head">
+        <span class="kind" id="kind"></span>
+        <span class="muted" id="date"></span>
+      </div>
+      <div class="amount num" id="amount"></div>
+      <div class="counterparty" id="counterparty"></div>
+      <div class="purpose" id="purpose"></div>
+
+      <div class="guess" id="guess" hidden>
+        <div><span class="muted">Die Regel meint:</span> <b id="guess-line"></b></div>
+        <div class="note" id="guess-note"></div>
+        <button class="button primary" id="confirm" type="button">Passt <kbd>↵</kbd></button>
+      </div>
+
+      <div class="picker">
+        <input type="search" id="search" placeholder="Planzeile suchen …  (Taste /)" autocomplete="off">
+        <label class="remember"><input type="checkbox" id="remember"> <span id="remember-label">Künftig immer so</span></label>
+        <div class="lines" id="lines"></div>
+      </div>
+
+      <div class="current-foot">
+        <button class="button" id="skip" type="button">Überspringen <kbd>S</kbd></button>
+        <span class="muted small" id="feedback" role="status"></span>
+      </div>
+    </article>
+
+    <article class="card done" id="done" hidden>
+      <div class="done-icon" aria-hidden="true">✓</div>
+      <h2>Alles zugeordnet</h2>
+      <p class="muted">Keine offenen oder zweifelhaften Buchungen mehr.</p>
+      <a class="button primary" href="/">Zur Übersicht</a>
+    </article>
+
+    <aside class="card queue">
+      <h2>Als Nächstes</h2>
+      <ol id="queue"></ol>
+    </aside>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}<script src="/static/assign.js"></script>{% endblock %}

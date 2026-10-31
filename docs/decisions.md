@@ -1,7 +1,7 @@
 # Decisions
 
-Every product and architecture decision of Bauplan, with its reason. Settled in a design session on
-2026-10-31; newest additions at the end of each section.
+Every product and architecture decision of Finanzfuchs (first called Bauplan), with its reason.
+Settled in design sessions from 2026-10-31; newest additions at the end of each section.
 
 ## Product
 
@@ -10,8 +10,8 @@ Every product and architecture decision of Bauplan, with its reason. Settled in 
 - **Granularity**: every bank transaction is assigned to exactly one plan line; the category
   follows from the line. Views show categories per month with plan lines as the detail.
 - **Accounts in scope**: the joint DKB account and the shared sub-accounts *Fixkosten*,
-  *Funpark* and *Notgroschen*. Transfers to the personal accounts and to private loans count as spent the
-  moment they leave the joint account; what happens on those accounts is private.
+  *Funpark* and *Notgroschen*. Transfers to the personal accounts and to private loans count as spent
+  the moment they leave the joint account; what happens on those accounts is private.
 - **Internal transfers**: transfers between the four Fuxbau accounts are recognized by IBAN as
   *Umbuchung* and never count as spending. They only serve the monthly check whether a standing
   order arrived as planned.
@@ -34,56 +34,55 @@ Every product and architecture decision of Bauplan, with its reason. Settled in 
 
 ## Architecture
 
-- **Frontend v1 is a Google Sheet**: both of us know spreadsheets, it works on the phone and
-  needs no hosting or login of our own. Owned by Max, Merle and the service account edit it.
-  A web app (or a section of the Fuxbau app) may follow later and build on the same service.
-- **The sheet is the source of truth** for transactions and assignments. The service appends new
-  transactions (deduplicated by transaction id) and only ever fills empty cells, so manual
-  assignments are never overwritten. A two-way sync with a database of our own would cost far
-  more for no gain in v1.
-- **Raw bank responses are archived on the NUC**: transactions older than 90 days can usually not
-  be fetched again, so nothing may get lost when a row in the sheet is deleted.
-- **Bank access through Enable Banking** in restricted production mode (only our own linked
-  accounts): one approval in the DKB app about every 180 days, then unattended API access.
-  FinTS would need an approval on every run; GoCardless takes no new customers; a manual CSV
-  import stays the fallback.
-- **Full backfill right after the approval**: banks often return the full history only shortly
-  after the approval, so `connect` fetches everything since 2026-01-01 immediately.
-- **Runs on the homelab NUC**: Python 3.13 with uv, a Docker image like the Fuxbau app, deployed
-  by the homelab Ansible as `nuc/bauplan`. Daily sync at 06:00 (PSD2 allows four unattended
-  fetches a day).
-- **Notifications through ntfy** (pi5): failed sync, consent expiring within 14 days, and a
-  Sunday summary of unassigned transactions.
-- **Assignment v1**: deterministic rules in code for the unambiguous cases (internal transfers,
-  standing orders); everything else is assigned by hand or with Claude Code in this repository.
-  **v2** moves that into the service through the Claude API, sending counterparty name,
-  purpose, amount and date but no own IBANs or balances.
-- **CSV import before Enable Banking**: the DKB web export covers any period (not just 90 days),
-  so a monthly manual export is enough to start. `bauplan import` adds it to the local ledger
-  `data/transactions.csv`; Enable Banking follows later. The export has no transaction ids, so an
-  id is derived from the row plus its position among identical rows of the same day.
-- **Sheet layout**: tabs *Auswertung* (category × month: actual, plan, difference), *Planzeilen*
-  (per line year to date, which also covers yearly costs), *Fixkosten-Topf* (planned rate, paid
-  in, refunded, running balance), *Buchungen* and *Plan*. Every analysis is a formula, so a plan
-  line chosen by hand updates all views at once; the service never computes totals itself.
-- **Formulas are written under en_US, the sheet is shown under de_DE**: the Sheets API parses
-  formulas in the spreadsheet's locale (the first live run under de_DE failed with parse errors
-  in every cell). Switching the locale around the writes keeps one formula syntax in the code;
-  Google stores formulas independent of locale and shows them in German afterwards.
-- **Bank text is written raw**: transactions go in with `valueInputOption=RAW` and dates as serial
-  numbers, so a purpose starting with `=` can never become a formula. Only Bauplan's own formulas
-  are written as entered.
-- **Own service account `bauplan`** in the existing Google Cloud project instead of reusing the
-  calendar account: a leaked key of another service must not open the finances. The Sheets API is
-  called directly with httpx and pyjwt; the Google client libraries are not worth it for five calls.
-- **Dashboard as a local, self-contained HTML file** (`bauplan dashboard` → `data/dashboard.html`):
-  the sheet's tables are hard to read at a glance, so a BI-style page shows KPIs, monthly trend,
-  plan vs. actual per category, the largest effects on the balance, where the money goes and the
-  Fixkosten pot, all filterable by year, month and category. It reads the sheet, not the local
-  ledger, so assignments made by hand show up. ECharts and the data are inlined: nothing loads
-  from the internet and the family's numbers never reach a CDN or a hosting service. Serving it
-  on the NUC behind Pocket ID is the natural next step for Merle.
+- **A web app replaces the Google Sheet** (2026-10-31, same day): in the sheet, assigning meant
+  finding a row among 1.282 and picking one of 64 ids in a dropdown, and its formulas broke on
+  locale and `LET`. The app shows the open and doubtful transactions one by one with plan lines
+  as buttons, and turns a choice into a rule on request. Rules, plan and assignments now live in
+  one place instead of a sheet plus a rule file on a laptop.
+- **SQLite on the Pi is the single source of truth**: plan, rules, transactions, imports and
+  login sessions in one file, amounts as cents. One connection per request; the schema version
+  sits in `PRAGMA user_version`, so later migrations know where they start.
+- **Runs on the pi5 as `http://finanzfuchs.home`** behind Traefik (AdGuard resolves `*.home` to
+  the Pi), deployed by the homelab Ansible like the other pi5 apps. The image is built for arm64
+  by GitHub Actions on a native ARM runner (free for the public repository).
+- **Login through Pocket ID**, group `fuxbau` only, with the OIDC code from the Fuxbau app. The
+  session is an HttpOnly, SameSite=Lax cookie (30 days) whose token is stored only as a hash.
+  Lax cookies are not sent on cross-site POSTs, which covers CSRF for the forms; the JSON API
+  additionally needs a JSON content type. There is no login bypass; tests use a fake provider.
+- **Pages**: *Übersicht* (the dashboard), *Zuordnen* (open first, then doubtful; confirm the
+  rule's guess, pick a plan line, optionally remember it as a rule), *Import* (upload a DKB CSV;
+  known rows are skipped, rules run at once), *Plan* (edit lines; a changed amount ends the old
+  line with *gültig bis* and starts a new one), and an Excel export as backup.
+- **Rules from the app go to the top** and apply to open and doubtful transactions only; a choice
+  made by hand (`manual`) is never changed by a rule again.
+- **Doubtful** means assigned by a rule whose note starts with `ZWEIFEL`; confirming it makes it
+  a choice made by hand.
+- **Takeover**: `finanzfuchs seed data` reads `plan.csv`, `rules.csv` and the DKB exports from
+  before the app into an empty database, which is then copied to the Pi.
+- **Public repository**: code, tests and docs contain no IBANs, real counterparties, amounts or
+  keys; `data/`, `.env`, `*.pem`, `*.csv` and `*.xlsx` are ignored.
+- **Dashboard**: a BI-style page with KPIs, monthly trend, plan vs. actual per category, the
+  largest effects on the balance, where the money goes and the Fixkosten pot, filterable by year,
+  month and category. ECharts and the data are inlined, so nothing loads from the internet.
 - **Unplanned means a plan line without an amount** (or no line yet), in every category. This
   includes drugstore and Amazon under *Täglicher Bedarf*, not only the *Ungeplant* category.
-- **Assignment rules live in `data/rules.csv`** (first match wins, kept by Claude Code). They are
-  private data like the transactions, so they stay out of git; only the rule engine is code.
+- **CSV import before Enable Banking**: the DKB web export covers any period (not just 90 days),
+  so a monthly manual export is enough. The export has no transaction ids, so an id is derived
+  from the row plus its position among identical rows of the same day.
+- **Bank access through Enable Banking later** (code prepared): restricted production mode, one
+  approval in the DKB app about every 180 days; FinTS would need an approval on every run,
+  GoCardless takes no new customers. Banks often return the full history only shortly after the
+  approval, so `connect` backs up everything since 2026-01-01 at once, and raw responses are
+  archived before parsing because older transactions cannot be fetched again.
+- **Assignment by AI later (v2)**: through the Claude API, sending counterparty name, purpose,
+  amount and date but no own IBANs or balances.
+
+## Superseded
+
+- **Google Sheet as frontend and source of truth** (replaced by the web app, see above). Learned
+  on the way: the Sheets API parses formulas in the spreadsheet's locale, and `LET` needs
+  `ARRAYFORMULA` to evaluate `SEQUENCE`.
+- **Service on the NUC with a daily sync and ntfy notifications**: postponed until Enable Banking
+  is connected; with CSV uploads there is nothing to schedule.
+- **Rules in `data/rules.csv`, kept by Claude Code**: rules now live in the database and grow
+  from the assigning page.

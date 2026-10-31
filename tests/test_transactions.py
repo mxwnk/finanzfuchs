@@ -3,7 +3,7 @@ from decimal import Decimal
 
 import pytest
 
-from bauplan.banking.transactions import TransactionParseError, parse_transaction
+from finanzfuchs.banking.transactions import TransactionParseError, parse_transaction
 
 ACCOUNT_UID = "account-uid-1"
 

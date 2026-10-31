@@ -1,18 +1,24 @@
 [project]
-name = "bauplan"
+name = "finanzfuchs"
 version = "0.1.0"
 description = "Plan vs. actual of the Fuxbau family budget, fed from the DKB accounts via Enable Banking"
 requires-python = ">=3.13"
 dependencies = [
+    "fastapi>=0.162.0",
     "httpx>=0.28.1",
+    "jinja2>=3.1.6",
+    "openpyxl>=3.1.5",
     "pyjwt[crypto]>=2.15.1",
+    "python-multipart>=0.0.33",
+    "uvicorn>=0.54.0",
 ]
 
 [project.scripts]
-bauplan = "bauplan.cli:main"
+finanzfuchs = "finanzfuchs.cli:main"
 
 [dependency-groups]
 dev = [
+    "httpx2>=2.16.0",
     "pytest>=9.1.1",
     "ruff>=0.16.10",
 ]
@@ -22,7 +28,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["bauplan"]
+packages = ["finanzfuchs"]
 
 [tool.ruff]
 line-length = 100
@@ -32,7 +38,8 @@ target-version = "py313"
 select = ["E", "F", "I", "B", "UP", "SIM", "N"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["bauplan"]
+known-first-party = ["finanzfuchs"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["tests"]

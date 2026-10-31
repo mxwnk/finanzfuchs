@@ -7,7 +7,7 @@ import pytest
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 
-from bauplan.banking.client import API_BASE_URL, EnableBankingClient, EnableBankingError
+from finanzfuchs.banking.client import API_BASE_URL, EnableBankingClient, EnableBankingError
 
 NOW = datetime(2026, 11, 1, 6, 0, tzinfo=UTC)
 Handler = Callable[[httpx.Request], httpx.Response]
@@ -78,7 +78,7 @@ def test_starts_the_authorization_for_personal_accounts(make_client) -> None:
         bank={"name": "DKB", "country": "DE"},
         consent_end=consent_end,
         state="state-1",
-        redirect_url="https://fuxbau.org/bauplan/callback",
+        redirect_url="https://example.org/finanzfuchs/callback",
     )
 
     assert approval_url == "https://bank/approve"
@@ -86,7 +86,7 @@ def test_starts_the_authorization_for_personal_accounts(make_client) -> None:
         "access": {"valid_until": "2027-04-30T00:00:00+00:00"},
         "aspsp": {"name": "DKB", "country": "DE"},
         "state": "state-1",
-        "redirect_url": "https://fuxbau.org/bauplan/callback",
+        "redirect_url": "https://example.org/finanzfuchs/callback",
         "psu_type": "personal",
     }
 

@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from bauplan.plan import PlanFileError, PlanLine, load_plan
+from finanzfuchs.plan import PlanFileError, PlanLine, load_plan
 
 HEADER = (
     "plan_line_id,type,category,description,amount,rhythm,"

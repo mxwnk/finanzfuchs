@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from bauplan.archive import RawArchive
-from bauplan.sync import SessionAccount, fetch_all_accounts, read_session_accounts
+from finanzfuchs.archive import RawArchive
+from finanzfuchs.sync import SessionAccount, fetch_all_accounts, read_session_accounts
 
 NOW = datetime(2026, 11, 1, 6, 0, tzinfo=UTC)
 HISTORY_START = date(2026, 1, 1)

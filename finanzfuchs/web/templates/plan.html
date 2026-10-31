@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Plan{% endblock %}
+{% block subtitle %}Was ihr vorhabt einzunehmen und auszugeben{% endblock %}
+{% block content %}
+{% if error %}<div class="alert bad" role="alert">{{ error }}</div>{% endif %}
+{% if saved %}<div class="alert good" role="status">Gespeichert.</div>{% endif %}
+<article class="card">
+  <div class="card-head">
+    <div>
+      <h2>Planzeilen</h2>
+      <p class="sub">Ändert sich ein Betrag, setzt bei der alten Zeile <b>gültig bis</b> und legt eine neue an – so bleiben vergangene Monate richtig.</p>
+    </div>
+    <input type="search" id="plan-filter" placeholder="Filtern …" aria-label="Planzeilen filtern">
+  </div>
+  <div class="table-wrap">
+    <table class="plan-table">
+      <thead><tr>
+        <th>Beschreibung</th><th>Kategorie</th><th>Typ</th><th class="right">Betrag</th><th>Rhythmus</th>
+        <th>Topf</th><th>Gültig ab</th><th>Gültig bis</th><th></th>
+      </tr></thead>
+      <tbody>
+        {% for line in plan %}
+        <tr id="{{ line.plan_line_id }}" class="{{ 'saved' if saved == line.plan_line_id }}{{ ' ended' if line.valid_until and line.valid_until.isoformat() < today }}">
+          <td><input form="f-{{ loop.index }}" name="description" value="{{ line.description }}" required><span class="id">{{ line.plan_line_id }}</span></td>
+          <td><input form="f-{{ loop.index }}" name="category" value="{{ line.category }}" list="categories" required></td>
+          <td>{{ type_select(loop.index, line.line_type) }}</td>
+          <td><input form="f-{{ loop.index }}" name="amount" class="right num" value="{{ '%.2f'|format(line.amount)|replace('.', ',') }}" inputmode="decimal"></td>
+          <td>{{ rhythm_select(loop.index, line.rhythm) }}</td>
+          <td><input form="f-{{ loop.index }}" name="pot" value="{{ line.pot }}" class="short"></td>
+          <td><input form="f-{{ loop.index }}" name="valid_from" type="date" value="{{ line.valid_from.isoformat() }}"></td>
+          <td><input form="f-{{ loop.index }}" name="valid_until" type="date" value="{{ line.valid_until.isoformat() if line.valid_until else '' }}"></td>
+          <td><form id="f-{{ loop.index }}" method="post" action="/plan/{{ line.plan_line_id }}"><button class="button small" type="submit">Speichern</button></form></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</article>
+
+<article class="card add-line">
+  <h2>Neue Planzeile</h2>
+  <form method="post" action="/plan/neu" class="add-form">
+    <label>Beschreibung<input name="description" required></label>
+    <label>Kategorie<input name="category" list="categories" required></label>
+    <label>Typ{{ type_select(None, "Ausgabe") }}</label>
+    <label>Betrag<input name="amount" inputmode="decimal" placeholder="0,00" class="right"></label>
+    <label>Rhythmus{{ rhythm_select(None, "Monat") }}</label>
+    <label>Topf<input name="pot" class="short"></label>
+    <label>Gültig ab<input name="valid_from" type="date" value="{{ today }}"></label>
+    <button class="button primary" type="submit">Anlegen</button>
+  </form>
+</article>
+
+<datalist id="categories">
+  {% for category in plan|map(attribute='category')|unique %}<option value="{{ category }}">{% endfor %}
+</datalist>
+{% endblock %}
+
+{% macro type_select(index, current) -%}
+<select name="line_type" {% if index %}form="f-{{ index }}"{% endif %}>
+  {% for option in ["Ausgabe", "Einnahme", "Umbuchung"] %}<option {{ 'selected' if option == current }}>{{ option }}</option>{% endfor %}
+</select>
+{%- endmacro %}
+
+{% macro rhythm_select(index, current) -%}
+<select name="rhythm" {% if index %}form="f-{{ index }}"{% endif %}>
+  {% for option in ["Monat", "Jahr"] %}<option {{ 'selected' if option == current }}>{{ option }}</option>{% endfor %}
+</select>
+{%- endmacro %}
+
+{% block scripts %}
+<script>
+  document.getElementById("plan-filter").addEventListener("input", event => {
+    const query = event.target.value.toLowerCase();
+    document.querySelectorAll(".plan-table tbody tr").forEach(row => {
+      const text = [...row.querySelectorAll("input")].map(input => input.value).join(" ").toLowerCase();
+      row.hidden = query && !text.includes(query);
+    });
+  });
+  document.querySelector("tr.saved")?.scrollIntoView({ block: "center" });
+</script>
+{% endblock %}
