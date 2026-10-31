@@ -23,7 +23,7 @@ class AssignRequest(BaseModel):
 def attention(user: ApiUser, context: Context) -> dict[str, Any]:
     with context.database.connect() as connection:
         entries = TransactionStore(connection).needing_attention()
-        plan = PlanStore(connection).list()
+        plan = PlanStore(connection).lines()
     return {
         "entries": [_entry_json(entry) for entry in entries],
         "planLines": [

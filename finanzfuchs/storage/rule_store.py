@@ -19,7 +19,7 @@ class RuleStore:
     def __init__(self, connection: sqlite3.Connection) -> None:
         self._connection = connection
 
-    def list(self) -> list[StoredRule]:
+    def rules(self) -> list[StoredRule]:
         rows = self._connection.execute(
             f"SELECT id, {', '.join(FIELDS)} FROM rules ORDER BY position"
         )

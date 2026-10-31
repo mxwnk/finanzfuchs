@@ -23,7 +23,7 @@ class HandAssignment:
 
 def apply_rules(connection: sqlite3.Connection, entries: list[LedgerEntry]) -> int:
     """Assigns the given entries by the stored rules; returns how many got a plan line."""
-    rules = [stored.rule for stored in RuleStore(connection).list()]
+    rules = [stored.rule for stored in RuleStore(connection).rules()]
     store = TransactionStore(connection)
     assigned = 0
     for result in assign([entry.transaction for entry in entries], rules):
@@ -59,7 +59,7 @@ def confirm(connection: sqlite3.Connection, transaction_id: str) -> None:
 
 
 def _apply_to_waiting(connection: sqlite3.Connection) -> int:
-    waiting = [e for e in TransactionStore(connection).list() if e.may_be_reassigned_by_rule]
+    waiting = [e for e in TransactionStore(connection).entries() if e.may_be_reassigned_by_rule]
     return apply_rules(connection, waiting)
 
 

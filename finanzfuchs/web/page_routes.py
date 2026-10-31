@@ -26,8 +26,8 @@ router = APIRouter()
 @router.get("/", response_class=HTMLResponse)
 def overview(user: PageUser, context: Context) -> HTMLResponse:
     with context.database.connect() as connection:
-        plan = PlanStore(connection).list()
-        entries = TransactionStore(connection).list()
+        plan = PlanStore(connection).lines()
+        entries = TransactionStore(connection).entries()
     attention = sum(1 for entry in entries if entry.needs_attention)
     nav = _render_nav("overview", user, attention)
     return HTMLResponse(render_dashboard(build_dataset(plan, entries, context.now()), nav))
@@ -84,7 +84,7 @@ async def add_plan_line(
     form = dict(await request.form())
     with context.database.connect() as connection:
         store = PlanStore(connection)
-        existing_ids = {line.plan_line_id for line in store.list()}
+        existing_ids = {line.plan_line_id for line in store.lines()}
         try:
             line = plan_line_from_form(
                 new_plan_line_id(str(form.get("description", "")), existing_ids), form
@@ -122,7 +122,9 @@ async def update_plan_line(
 @router.get("/export.xlsx")
 def export(user: PageUser, context: Context) -> Response:
     with context.database.connect() as connection:
-        content = build_workbook(PlanStore(connection).list(), TransactionStore(connection).list())
+        content = build_workbook(
+            PlanStore(connection).lines(), TransactionStore(connection).entries()
+        )
     file_name = f"finanzfuchs-{date.today().isoformat()}.xlsx"
     disposition = f'attachment; filename="{file_name}"'
     return Response(
@@ -140,7 +142,7 @@ def _page(
     **values: Any,
 ) -> HTMLResponse:
     with context.database.connect() as connection:
-        plan = PlanStore(connection).list()
+        plan = PlanStore(connection).lines()
         transactions = TransactionStore(connection)
         attention = len(transactions.needing_attention())
         imports = transactions.latest_imports(RECENT_IMPORTS)

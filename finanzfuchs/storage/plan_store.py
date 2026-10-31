@@ -11,7 +11,7 @@ class PlanStore:
     def __init__(self, connection: sqlite3.Connection) -> None:
         self._connection = connection
 
-    def list(self) -> list[PlanLine]:
+    def lines(self) -> list[PlanLine]:
         rows = self._connection.execute("SELECT * FROM plan_lines ORDER BY position")
         return [_to_plan_line(row) for row in rows]
 

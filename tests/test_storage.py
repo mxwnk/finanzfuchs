@@ -45,7 +45,7 @@ class TestDatabase:
         database.initialize()
 
         with database.connect() as connection:
-            assert len(PlanStore(connection).list()) == 1
+            assert len(PlanStore(connection).lines()) == 1
 
     def test_refuses_a_database_from_a_newer_version(self, tmp_path: Path) -> None:
         path = tmp_path / "newer.sqlite3"
@@ -77,7 +77,7 @@ class TestPlanStore:
         store.add(plan_line("wohnen"))
         store.add(plan_line("auto"))
 
-        assert [line.plan_line_id for line in store.list()] == ["wohnen", "auto"]
+        assert [line.plan_line_id for line in store.lines()] == ["wohnen", "auto"]
 
     def test_updates_amount_and_validity(self, connection: sqlite3.Connection) -> None:
         store = PlanStore(connection)
@@ -97,7 +97,7 @@ class TestRuleStore:
         store.append(AssignmentRule("lebensmittel", counterparty_contains="general"))
         store.add_at_top(AssignmentRule("lebensmittel", counterparty_contains="specific"))
 
-        order = [stored.rule.counterparty_contains for stored in store.list()]
+        order = [stored.rule.counterparty_contains for stored in store.rules()]
 
         assert order == ["specific", "general"]
 
@@ -112,7 +112,7 @@ class TestTransactionStore:
 
         store.add([bank_transaction("t1")], stored_import(connection))
 
-        [entry] = store.list()
+        [entry] = store.entries()
         assert entry.transaction == bank_transaction("t1")
         assert entry.is_open
 

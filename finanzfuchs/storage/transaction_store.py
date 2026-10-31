@@ -34,7 +34,7 @@ class TransactionStore:
             [_insert_values(transaction, import_id) for transaction in transactions],
         )
 
-    def list(self) -> list[LedgerEntry]:
+    def entries(self) -> list[LedgerEntry]:
         rows = self._connection.execute("SELECT * FROM transactions ORDER BY booking_date, rowid")
         return [_to_entry(row) for row in rows]
 
@@ -46,7 +46,7 @@ class TransactionStore:
 
     def needing_attention(self) -> list[LedgerEntry]:
         """Open first, then doubtful, newest first within each group."""
-        entries = [entry for entry in self.list() if entry.needs_attention]
+        entries = [entry for entry in self.entries() if entry.needs_attention]
         return sorted(
             entries, key=lambda e: (not e.is_open, -e.transaction.booking_date.toordinal())
         )

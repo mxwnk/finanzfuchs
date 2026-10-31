@@ -32,7 +32,9 @@ def with_plan_and_rule(connection: sqlite3.Connection) -> None:
 
 def entry(connection: sqlite3.Connection, payee: str):
     return next(
-        e for e in TransactionStore(connection).list() if e.transaction.counterparty_name == payee
+        e
+        for e in TransactionStore(connection).entries()
+        if e.transaction.counterparty_name == payee
     )
 
 
@@ -43,7 +45,7 @@ class TestImport:
         summary = import_text(connection, REWE, IKEA, PENDING)
 
         assert (summary.added_count, summary.pending_count) == (2, 1)
-        assert len(TransactionStore(connection).list()) == 2
+        assert len(TransactionStore(connection).entries()) == 2
 
     def test_a_second_import_of_the_same_rows_adds_nothing(
         self, connection: sqlite3.Connection
@@ -101,7 +103,7 @@ class TestAssignByHand:
         )
 
         assert result == result.__class__(rule_created=True, also_assigned=1)
-        assert all(e.plan_line_id == "anschaffungen" for e in TransactionStore(connection).list()
+        assert all(e.plan_line_id == "anschaffungen" for e in TransactionStore(connection).entries()
                    if e.transaction.counterparty_name == "IKEA")  # fmt: skip
 
     def test_a_remembered_rule_never_overrides_a_manual_choice(
@@ -109,7 +111,7 @@ class TestAssignByHand:
     ) -> None:
         with_plan_and_rule(connection)
         import_text(connection, REWE, export_row("01.10.26", "REWE", "-3,00"))
-        first, second = [e for e in TransactionStore(connection).list()]
+        first, second = [e for e in TransactionStore(connection).entries()]
         assign_by_hand(
             connection, first.transaction.transaction_id, "anschaffungen", remember=False
         )
