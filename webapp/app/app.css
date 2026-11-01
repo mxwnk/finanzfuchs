@@ -1,0 +1,20 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --color-fox: #eb6834;
+  --color-fox-dark: #c9471a;
+}
+
+html,
+body {
+  @apply bg-stone-100 text-stone-900 antialiased;
+
+  @media (prefers-color-scheme: dark) {
+    @apply bg-stone-950 text-stone-100;
+  }
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+}
