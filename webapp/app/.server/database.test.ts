@@ -10,6 +10,7 @@ import {
   addTransactions,
   assignTransaction,
   budgetItems,
+  countUnassignedSpending,
   deleteBudgetItem,
   type NewBudgetItem,
   openDatabase,
@@ -47,6 +48,13 @@ describe("transactions", () => {
 
     expect([newest.id, oldest.id]).toEqual(["new", "old"]);
     expect(newest.category).toBeNull();
+  });
+
+  it("counts unassigned spending but not income or assigned ones", () => {
+    addTransactions(database, [bankTransaction("spent"), bankTransaction("income", "2026-11-01", 300000), bankTransaction("done")]);
+    assignTransaction(database, "done", "Wohnen");
+
+    expect(countUnassignedSpending(database)).toBe(1);
   });
 
   it("lists unassigned spending but not income or assigned ones", () => {

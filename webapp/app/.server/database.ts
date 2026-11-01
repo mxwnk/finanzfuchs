@@ -72,6 +72,12 @@ export function transactionsInMonth(database: Database, month: Month): AssignedT
   return rows.map(toAssignedTransaction);
 }
 
+/** How many outgoing transactions still wait for a category; cheap enough for every page. */
+export function countUnassignedSpending(database: Database): number {
+  const row = database.prepare(`SELECT COUNT(*) AS open FROM transactions WHERE category IS NULL AND amount_cents < 0`).get() as { open: number };
+  return row.open;
+}
+
 /** Money that left the account and still waits for a category, newest first. */
 export function unassignedSpending(database: Database): AssignedTransaction[] {
   const rows = database

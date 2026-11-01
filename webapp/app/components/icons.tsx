@@ -28,3 +28,44 @@ export function UndoIcon(props: IconProps) {
     </Icon>
   );
 }
+
+/** Overview: a bar chart. */
+export function OverviewIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M3 3v18h18" />
+      <path d="M7 16v-3M11 16V9M15 16v-5M19 16V6" />
+    </Icon>
+  );
+}
+
+/** Budgets: a wallet. */
+export function BudgetIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M19 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4" />
+      <path d="M21 11h-4a2 2 0 0 0 0 4h4z" />
+    </Icon>
+  );
+}
+
+/** Assigning: a price tag. */
+export function AssignIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M12.6 2.6A2 2 0 0 0 11.2 2H4a2 2 0 0 0-2 2v7.2a2 2 0 0 0 .6 1.4l8.7 8.7a2.4 2.4 0 0 0 3.4 0l6.6-6.6a2.4 2.4 0 0 0 0-3.4z" />
+      <circle cx="7.5" cy="7.5" r="1.5" />
+    </Icon>
+  );
+}
+
+/** Import: an arrow into a tray. */
+export function ImportIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M12 3v12" />
+      <path d="m7 10 5 5 5-5" />
+      <path d="M5 21h14" />
+    </Icon>
+  );
+}
