@@ -30,15 +30,15 @@ class PlanStore:
         ).fetchone()[0]
         self._connection.execute(
             """INSERT INTO plan_lines (id, position, type, category, description, amount_cents,
-                   rhythm, pot, valid_from, valid_until)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                   rhythm, pot, valid_from, valid_until, kind)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (line.plan_line_id, position, *_editable_values(line)),
         )
 
     def update(self, line: PlanLine) -> None:
         self._connection.execute(
             """UPDATE plan_lines SET type = ?, category = ?, description = ?, amount_cents = ?,
-                   rhythm = ?, pot = ?, valid_from = ?, valid_until = ?
+                   rhythm = ?, pot = ?, valid_from = ?, valid_until = ?, kind = ?
                WHERE id = ?""",
             (*_editable_values(line), line.plan_line_id),
         )
@@ -54,6 +54,7 @@ def _editable_values(line: PlanLine) -> tuple[object, ...]:
         line.pot,
         line.valid_from.isoformat(),
         line.valid_until.isoformat() if line.valid_until else None,
+        line.kind,
     )
 
 
@@ -68,4 +69,5 @@ def _to_plan_line(row: sqlite3.Row) -> PlanLine:
         pot=row["pot"],
         valid_from=date.fromisoformat(row["valid_from"]),
         valid_until=date.fromisoformat(row["valid_until"]) if row["valid_until"] else None,
+        kind=row["kind"],
     )

@@ -6,6 +6,15 @@ from datetime import date
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
+FIXED = "fix"
+VARIABLE = "variabel"
+KINDS = (FIXED, VARIABLE)
+INCOME_TYPE = "Einnahme"
+YEARLY_RHYTHM = "Jahr"
+FIXED_COSTS_POT = "Fixkosten"
+# Categories whose lines are debited once a month at a known amount.
+FIXED_CATEGORIES = frozenset({"Wohnen", "Versicherungen", "Fixkosten", "Sparen"})
+
 
 class PlanFileError(ValueError):
     """The plan file contains a line that cannot be used."""
@@ -25,6 +34,20 @@ class PlanLine:
     """The account or person a standing order sends the money to; empty for the joint account."""
     valid_from: date
     valid_until: date | None
+    kind: str = VARIABLE
+    """`fix` (arrives once at a known amount) or `variabel` (a budget used up over the month)."""
+
+    @property
+    def is_paid_from_fixed_costs_pot(self) -> bool:
+        """Yearly costs and what the Fixkosten account reimburses are saved up, not monthly."""
+        return self.rhythm == YEARLY_RHYTHM or self.pot == FIXED_COSTS_POT
+
+
+def default_kind(line_type: str, category: str, pot: str) -> str:
+    """The first guess for plan lines from before the field existed; editable on the plan page."""
+    if line_type == INCOME_TYPE or pot or category in FIXED_CATEGORIES:
+        return FIXED
+    return VARIABLE
 
 
 def load_plan(path: Path) -> list[PlanLine]:
@@ -45,6 +68,7 @@ def _read_plan_line(row: dict[str, str], line_number: int) -> PlanLine:
             pot=row["pot"],
             valid_from=date.fromisoformat(row["valid_from"]),
             valid_until=date.fromisoformat(row["valid_until"]) if row["valid_until"] else None,
+            kind=row.get("kind") or default_kind(row["type"], row["category"], row["pot"]),
         )
     except (KeyError, ValueError, InvalidOperation) as error:
         raise PlanFileError(f"Unusable plan line in line {line_number}: {error}") from error

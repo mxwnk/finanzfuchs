@@ -8,12 +8,14 @@ from fastapi.staticfiles import StaticFiles
 
 from finanzfuchs.config import Settings, WebSettings
 from finanzfuchs.storage.database import Database
-from finanzfuchs.web import api_routes, login_routes, page_routes
+from finanzfuchs.web import api_routes, login_routes, month_routes, page_routes
 from finanzfuchs.web.auth import Clock, IdentityProvider, LoginFlow, utc_now
 from finanzfuchs.web.context import AppContext, LoginRequiredError
 from finanzfuchs.web.oidc import OidcClient, OidcClientConfig
 
 STATIC_DIR = Path(__file__).parent / "static"
+# ECharts as a cached file for the month page; the year page inlines it.
+VENDOR_DIR = Path(__file__).parent.parent / "dashboard" / "vendor"
 
 
 def create_app(
@@ -30,7 +32,9 @@ def create_app(
     app = FastAPI(title="Finanzfuchs", docs_url=None, redoc_url=None, openapi_url=None)
     app.state.context = AppContext(settings, web_settings, database, login_flow, now)
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+    app.mount("/vendor", StaticFiles(directory=VENDOR_DIR), name="vendor")
     app.include_router(login_routes.router)
+    app.include_router(month_routes.router)
     app.include_router(page_routes.router)
     app.include_router(api_routes.router)
     app.add_exception_handler(LoginRequiredError, _redirect_to_login)

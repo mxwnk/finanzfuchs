@@ -138,11 +138,36 @@ class TestLogin:
 
 
 class TestPages:
-    def test_the_overview_is_the_dashboard_with_navigation(self, logged_in: TestClient) -> None:
-        html = logged_in.get("/").text
+    def test_the_year_view_is_the_dashboard_with_navigation(self, logged_in: TestClient) -> None:
+        html = logged_in.get("/jahr").text
 
         assert "window.BAUPLAN_DATA" in html
-        assert 'href="/zuordnen"' in html and "Merle" in html
+        assert 'href="/zuordnen"' in html and 'class="tabbar"' in html
+
+    def test_the_start_page_is_the_current_month(self, logged_in: TestClient) -> None:
+        html = logged_in.get("/").text
+
+        assert "November 2026" in html
+        assert "noch keine Buchungen" in html
+        assert 'href="/monat/2026-10"' in html
+
+    def test_a_past_month_shows_its_budgets_and_bookings(self, logged_in: TestClient) -> None:
+        upload(logged_in)
+
+        html = logged_in.get("/monat/2026-10").text
+
+        assert "Oktober 2026" in html
+        assert "Lebensmittel" in html and "REWE" in html
+        assert 'href="/monat/2026-11"' in html
+
+    def test_an_unknown_month_is_not_found(self, logged_in: TestClient) -> None:
+        assert logged_in.get("/monat/2026-13").status_code == 404
+
+    def test_the_app_can_be_added_to_the_home_screen(self, client: TestClient) -> None:
+        manifest = client.get("/static/manifest.webmanifest").json()
+
+        assert manifest["display"] == "standalone"
+        assert client.get("/static/icon-180.png").status_code == 200
 
     def test_an_import_reports_what_was_added_and_assigned(self, logged_in: TestClient) -> None:
         response = upload(logged_in)
@@ -174,6 +199,7 @@ class TestPages:
             "pot": "",
             "valid_from": "2026-01-01",
             "valid_until": "2026-12-31",
+            "kind": "variabel",
         }
 
         response = logged_in.post("/plan/lebensmittel", data=form)
@@ -186,7 +212,8 @@ class TestPages:
 
     def test_a_plan_line_with_a_broken_amount_is_not_saved(self, logged_in: TestClient) -> None:
         form = {"description": "Lebensmittel", "category": "x", "line_type": "Ausgabe",
-                "amount": "viel", "rhythm": "Monat", "valid_from": "2026-01-01"}  # fmt: skip
+                "amount": "viel", "rhythm": "Monat", "valid_from": "2026-01-01",
+                "kind": "fix"}  # fmt: skip
 
         response = logged_in.post("/plan/lebensmittel", data=form)
 
@@ -195,7 +222,8 @@ class TestPages:
 
     def test_a_new_plan_line_gets_an_id_from_its_description(self, logged_in: TestClient) -> None:
         form = {"description": "Kita Essen", "category": "Fixkosten", "line_type": "Ausgabe",
-                "amount": "45", "rhythm": "Monat", "valid_from": "2026-11-01"}  # fmt: skip
+                "amount": "45", "rhythm": "Monat", "valid_from": "2026-11-01",
+                "kind": "fix"}  # fmt: skip
 
         response = logged_in.post("/plan/neu", data=form)
 

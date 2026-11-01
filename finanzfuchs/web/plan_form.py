@@ -6,7 +6,7 @@ from collections.abc import Mapping
 from datetime import date
 from decimal import Decimal, InvalidOperation
 
-from finanzfuchs.plan import PlanLine
+from finanzfuchs.plan import KINDS, PlanLine
 
 LINE_TYPES = ("Ausgabe", "Einnahme", "Umbuchung")
 RHYTHMS = ("Monat", "Jahr")
@@ -29,6 +29,7 @@ def plan_line_from_form(plan_line_id: str, form: Mapping[str, object]) -> PlanLi
         pot=_text(form, "pot"),
         valid_from=_date(_text(form, "valid_from"), "Gültig ab") or date.today(),
         valid_until=_date(_text(form, "valid_until"), "Gültig bis"),
+        kind=_choice(form, "kind", KINDS, "Art"),
     )
 
 

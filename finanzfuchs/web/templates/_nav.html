@@ -1,11 +1,25 @@
+{% set tabs = [
+  ("month", "/", "Monat", "◐"),
+  ("year", "/jahr", "Jahr", "▤"),
+  ("assign", "/zuordnen", "Zuordnen", "✓"),
+  ("import", "/import", "Import", "⬆"),
+  ("plan", "/plan", "Plan", "☰"),
+] %}
 <nav class="nav" aria-label="Bereiche">
-  <a href="/" class="{{ 'active' if active == 'overview' }}">Übersicht</a>
-  <a href="/zuordnen" class="{{ 'active' if active == 'assign' }}">Zuordnen{% if attention %} <span class="count">{{ attention }}</span>{% endif %}</a>
-  <a href="/import" class="{{ 'active' if active == 'import' }}">Import</a>
-  <a href="/plan" class="{{ 'active' if active == 'plan' }}">Plan</a>
-  <a href="/export.xlsx">Excel</a>
+  {% for key, href, label, icon in tabs %}
+  <a href="{{ href }}" class="{{ 'active' if active == key }}"{% if active == key %} aria-current="page"{% endif %}>{{ label }}{% if key == "assign" and attention %} <span class="count">{{ attention }}</span>{% endif %}</a>
+  {% endfor %}
 </nav>
 <div class="nav-user">
-  <span>{{ user.name }}</span>
+  <a href="/export.xlsx" title="Plan und Buchungen als Excel-Datei">Excel</a>
+  <span class="user-name">{{ user.name }}</span>
   <form method="post" action="/auth/logout"><button type="submit">Abmelden</button></form>
 </div>
+<nav class="tabbar" aria-label="Bereiche">
+  {% for key, href, label, icon in tabs %}
+  <a href="{{ href }}" class="{{ 'active' if active == key }}"{% if active == key %} aria-current="page"{% endif %}>
+    <span class="tab-icon" aria-hidden="true">{{ icon }}{% if key == "assign" and attention %}<span class="dot">{{ attention }}</span>{% endif %}</span>
+    <span class="tab-label">{{ label }}</span>
+  </a>
+  {% endfor %}
+</nav>

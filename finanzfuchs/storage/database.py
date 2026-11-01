@@ -5,13 +5,15 @@ threads of the web server from sharing a connection.
 """
 
 import sqlite3
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from pathlib import Path
 
-SCHEMA_VERSION = 1
+from finanzfuchs.plan import default_kind
 
-SCHEMA = """
+SCHEMA_VERSION = 2
+
+INITIAL_SCHEMA = """
 CREATE TABLE plan_lines (
     id TEXT PRIMARY KEY,
     position INTEGER NOT NULL,
@@ -104,6 +106,7 @@ class Database:
 
 
 def _migrate(connection: sqlite3.Connection, path: Path) -> None:
+    """A new database gets the first schema, then every database runs the steps it lacks."""
     version = connection.execute("PRAGMA user_version").fetchone()[0]
     if version > SCHEMA_VERSION:
         raise DatabaseError(
@@ -111,5 +114,21 @@ def _migrate(connection: sqlite3.Connection, path: Path) -> None:
         )
     if version == 0:
         connection.execute("PRAGMA journal_mode = WAL")
-        connection.executescript(SCHEMA)
-        connection.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
+        connection.executescript(INITIAL_SCHEMA)
+        version = 1
+    for target_version in range(version + 1, SCHEMA_VERSION + 1):
+        MIGRATIONS[target_version](connection)
+    connection.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
+
+
+def _add_plan_line_kind(connection: sqlite3.Connection) -> None:
+    """Version 2: fixed or variable, guessed for the existing lines."""
+    connection.execute("ALTER TABLE plan_lines ADD COLUMN kind TEXT NOT NULL DEFAULT 'variabel'")
+    rows = connection.execute("SELECT id, type, category, pot FROM plan_lines").fetchall()
+    connection.executemany(
+        "UPDATE plan_lines SET kind = ? WHERE id = ?",
+        [(default_kind(row["type"], row["category"], row["pot"]), row["id"]) for row in rows],
+    )
+
+
+MIGRATIONS: dict[int, Callable[[sqlite3.Connection], None]] = {2: _add_plan_line_kind}

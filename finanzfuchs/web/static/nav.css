@@ -1,0 +1,31 @@
+/* Navigation for every page, the year dashboard included: top bar on wide screens, tab bar on phones. */
+.top-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+.nav { display: flex; align-items: center; gap: 2px; background: var(--surface-2); padding: 3px; border-radius: 11px; }
+.nav a { color: var(--text-secondary); text-decoration: none; font-weight: 500; font-size: 13.5px; padding: 6px 12px; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; }
+.nav a:hover { color: var(--text-primary); background: var(--surface-1); }
+.nav a.active { background: var(--surface-1); color: var(--text-primary); box-shadow: var(--shadow); font-weight: 600; }
+.nav .count { background: var(--critical); color: #fff; border-radius: 99px; font-size: 11px; font-weight: 700; padding: 0 6px; line-height: 17px; }
+.nav-user { display: flex; align-items: center; gap: 10px; color: var(--text-muted); font-size: 12.5px; }
+.nav-user a { color: var(--text-secondary); }
+.nav-user form { margin: 0; }
+.nav-user button { border: 0; background: none; color: var(--text-muted); cursor: pointer; font: inherit; text-decoration: underline; padding: 0; }
+
+.tabbar { display: none; }
+
+@media (max-width: 760px) {
+  .nav, .nav-user .user-name { display: none; }
+  body { padding-bottom: calc(68px + env(safe-area-inset-bottom)); }
+  .tabbar {
+    display: grid; grid-template-columns: repeat(5, 1fr); position: fixed; z-index: 50; left: 0; right: 0; bottom: 0;
+    padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+    background: color-mix(in srgb, var(--surface-1) 88%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    border-top: 1px solid var(--border);
+  }
+  .tabbar a { display: grid; justify-items: center; gap: 2px; text-decoration: none; color: var(--text-muted); font-size: 11px; font-weight: 600; padding: 4px 0; }
+  .tabbar a.active { color: var(--accent); }
+  .tab-icon { font-size: 19px; line-height: 24px; position: relative; }
+  .tab-icon .dot {
+    position: absolute; top: -4px; right: -14px; min-width: 18px; padding: 0 5px; border-radius: 99px;
+    background: var(--critical); color: #fff; font-size: 10.5px; line-height: 16px; font-weight: 700;
+  }
+}

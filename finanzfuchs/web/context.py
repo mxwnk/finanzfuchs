@@ -11,9 +11,11 @@ from finanzfuchs.config import Settings, WebSettings
 from finanzfuchs.storage.database import Database
 from finanzfuchs.storage.session_store import SessionUser
 from finanzfuchs.web.auth import Clock, LoginFlow
+from finanzfuchs.web.formatting import euro, long_date, percent, short_date
 
 SESSION_COOKIE = "finanzfuchs_session"
 TEMPLATES = Jinja2Templates(directory=Path(__file__).parent / "templates")
+TEMPLATES.env.filters.update(euro=euro, percent=percent, short_date=short_date, long_date=long_date)
 
 
 @dataclass(frozen=True)

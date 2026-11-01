@@ -77,6 +77,29 @@ Settled in design sessions from 2026-10-31; newest additions at the end of each 
 - **Assignment by AI later (v2)**: through the Claude API, sending counterparty name, purpose,
   amount and date but no own IBANs or balances.
 
+- **The month is the start page** (2026-11-01): Max wants to know how the current month is going
+  more than the year. It shows spent vs. planned with the remaining amount, the variable budgets
+  with a pace mark, a checklist of the fixed income and debits, what the Fixkosten pot paid, the
+  unplanned spending and the latest bookings. Without bookings yet it says so and offers the
+  import and the previous month. The former overview moves to *Jahr*.
+- **Plan lines are fixed or variable** (schema version 2): fixed lines arrive once at a known
+  amount and go on the checklist; variable lines are budgets used up over the month. Existing
+  lines got a guess (income, standing orders to a pot, housing, insurance, fixed costs and savings
+  are fixed); the plan page changes it.
+- **Pace**: a budget is *too fast* once its share spent is more than 10 percentage points ahead of
+  the share of the month passed, and *over* once it exceeds the plan.
+- **Fixed items**: received within 1 € or 1 %; income counts as received from the planned amount
+  upwards, because more income is no problem. Everything else deviates and is shown in red.
+- **Yearly costs and what the Fixkosten account reimburses** stay out of the monthly budget and
+  appear in their own section; they were saved up over the year.
+- **Year view in plain words**: per category "8.659 € von 8.000 €" and "659 € drüber" or
+  "350 € übrig" instead of arrows and percentages; an active category filter shows as a chip.
+- **Phones**: one column, bigger charts, a bottom tab bar (Monat, Jahr, Zuordnen, Import, Plan),
+  and a web manifest with icon so the app can live on the home screen. ECharts is served as a
+  cached file to the month page instead of being inlined into it.
+- **Weekly CSV import for now**, without reminders; Enable Banking remains the next big step for
+  fresh numbers without manual work.
+
 ## Superseded
 
 - **Google Sheet as frontend and source of truth** (replaced by the web app, see above). Learned

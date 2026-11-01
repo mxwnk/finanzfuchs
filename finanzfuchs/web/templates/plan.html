@@ -8,14 +8,14 @@
   <div class="card-head">
     <div>
       <h2>Planzeilen</h2>
-      <p class="sub">Ändert sich ein Betrag, setzt bei der alten Zeile <b>gültig bis</b> und legt eine neue an – so bleiben vergangene Monate richtig.</p>
+      <p class="sub">Ändert sich ein Betrag, setzt bei der alten Zeile <b>gültig bis</b> und legt eine neue an – so bleiben vergangene Monate richtig. <b>Art</b>: fix kommt einmal zum festen Betrag (Abhakliste), variabel ist ein Budget für den Monat.</p>
     </div>
     <input type="search" id="plan-filter" placeholder="Filtern …" aria-label="Planzeilen filtern">
   </div>
   <div class="table-wrap">
     <table class="plan-table">
       <thead><tr>
-        <th>Beschreibung</th><th>Kategorie</th><th>Typ</th><th class="right">Betrag</th><th>Rhythmus</th>
+        <th>Beschreibung</th><th>Kategorie</th><th>Typ</th><th title="fix: kommt einmal zum festen Betrag · variabel: Budget für den Monat">Art</th><th class="right">Betrag</th><th>Rhythmus</th>
         <th>Topf</th><th>Gültig ab</th><th>Gültig bis</th><th></th>
       </tr></thead>
       <tbody>
@@ -24,6 +24,7 @@
           <td><input form="f-{{ loop.index }}" name="description" value="{{ line.description }}" required><span class="id">{{ line.plan_line_id }}</span></td>
           <td><input form="f-{{ loop.index }}" name="category" value="{{ line.category }}" list="categories" required></td>
           <td>{{ type_select(loop.index, line.line_type) }}</td>
+          <td>{{ kind_select(loop.index, line.kind) }}</td>
           <td><input form="f-{{ loop.index }}" name="amount" class="right num" value="{{ '%.2f'|format(line.amount)|replace('.', ',') }}" inputmode="decimal"></td>
           <td>{{ rhythm_select(loop.index, line.rhythm) }}</td>
           <td><input form="f-{{ loop.index }}" name="pot" value="{{ line.pot }}" class="short"></td>
@@ -43,6 +44,7 @@
     <label>Beschreibung<input name="description" required></label>
     <label>Kategorie<input name="category" list="categories" required></label>
     <label>Typ{{ type_select(None, "Ausgabe") }}</label>
+    <label>Art{{ kind_select(None, "variabel") }}</label>
     <label>Betrag<input name="amount" inputmode="decimal" placeholder="0,00" class="right"></label>
     <label>Rhythmus{{ rhythm_select(None, "Monat") }}</label>
     <label>Topf<input name="pot" class="short"></label>
@@ -59,6 +61,12 @@
 {% macro type_select(index, current) -%}
 <select name="line_type" {% if index %}form="f-{{ index }}"{% endif %}>
   {% for option in ["Ausgabe", "Einnahme", "Umbuchung"] %}<option {{ 'selected' if option == current }}>{{ option }}</option>{% endfor %}
+</select>
+{%- endmacro %}
+
+{% macro kind_select(index, current) -%}
+<select name="kind" {% if index %}form="f-{{ index }}"{% endif %}>
+  {% for option in ["fix", "variabel"] %}<option {{ 'selected' if option == current }}>{{ option }}</option>{% endfor %}
 </select>
 {%- endmacro %}
 

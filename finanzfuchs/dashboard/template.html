@@ -2,7 +2,13 @@
 <html lang="de">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#eb6834">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="/static/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/static/icon-180.png">
+<link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/static/nav.css">
 <title>Finanzfuchs</title>
 <script>/*__ECHARTS__*/</script>
 <style>
@@ -74,15 +80,6 @@
     border-radius: 10px; height: 36px; padding: 0 12px; cursor: pointer; font: inherit;
   }
   .icon-btn:hover { color: var(--text-primary); }
-  .top-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
-  .nav { display: flex; align-items: center; gap: 2px; background: var(--surface-2); padding: 3px; border-radius: 11px; }
-  .nav a { color: var(--text-secondary); text-decoration: none; font-weight: 500; font-size: 13.5px; padding: 6px 12px; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; }
-  .nav a:hover { color: var(--text-primary); background: var(--surface-1); }
-  .nav a.active { background: var(--surface-1); color: var(--text-primary); box-shadow: var(--shadow); font-weight: 600; }
-  .nav .count { background: var(--critical); color: #fff; border-radius: 99px; font-size: 11px; font-weight: 700; padding: 0 6px; line-height: 17px; }
-  .nav-user { display: flex; align-items: center; gap: 8px; color: var(--text-muted); font-size: 12.5px; }
-  .nav-user form { margin: 0; }
-  .nav-user button { border: 0; background: none; color: var(--text-muted); cursor: pointer; font: inherit; text-decoration: underline; padding: 0; }
 
   .filters {
     position: sticky; top: 0; z-index: 20; display: flex; flex-wrap: wrap; align-items: center;
@@ -169,6 +166,22 @@
   .tag.doubt { background: color-mix(in srgb, var(--warning) 25%, transparent); color: #8a5d00; }
   .tag.open { background: color-mix(in srgb, var(--critical) 15%, transparent); color: var(--critical-text); }
   .more { margin-top: 10px; text-align: center; }
+  @media (max-width: 760px) {
+    .wrap { padding: 0 12px 24px; }
+    header.top { padding: 14px 0 8px; }
+    .brand p, #theme { display: none; }
+    .filters { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+    .filters::-webkit-scrollbar { display: none; }
+    .months { flex-wrap: nowrap; }
+    .filters .spacer, .scope { display: none; }
+    .kpis { gap: 10px; }
+    .kpi { padding: 12px 12px 8px; }
+    .kpi .value { font-size: 21px; }
+    .card { padding: 14px 12px 10px; border-radius: 14px; }
+    .card-head { flex-wrap: wrap; }
+    .h-360 { height: 400px; } .h-320 { height: 300px; }
+    .table-tools input[type=search] { width: 100%; }
+  }
   footer { color: var(--text-muted); font-size: 12px; margin-top: 22px; text-align: center; }
 </style>
 </head>
@@ -226,8 +239,8 @@
 
     <article class="card span-7">
       <div class="card-head">
-        <div><h2>Plan vs. Ist nach Kategorie</h2><p class="sub">Ausgaben im gewählten Zeitraum. Klick wählt die Kategorie.</p></div>
-        <div class="legend"><span><i style="background:var(--expense)"></i>Ist</span><span><i class="line" style="background:var(--plan)"></i>Plan</span><span>▲ über Plan</span></div>
+        <div><h2>Plan vs. Ist nach Kategorie</h2><p class="sub">Ausgaben im gewählten Zeitraum. Ein Klick filtert alles auf die Kategorie.</p></div>
+        <div class="legend"><span><i style="background:var(--expense)"></i>ausgegeben</span><span><i class="line" style="background:var(--plan)"></i>geplant</span><span class="legend-verdict"><b style="color:var(--critical-text)">rot</b> = mehr als geplant</span></div>
       </div>
       <div class="chart h-360" id="chart-categories"></div>
     </article>
@@ -508,24 +521,34 @@ window.BAUPLAN_DATA = /*__BAUPLAN_DATA__*/null;
     const ordered = [...rows].reverse();
     // The deviation sits in its own column at the right edge, clear of bars and plan ticks.
     const deviations = ordered.map(r => {
-      if (!r.plan) return `{bad|${euro.format(r.actual)}} {muted|ungeplant}`;
+      if (!r.plan) return `{amount|${euro.format(r.actual)}}\n{bad|ungeplant}`;
       const d = r.actual - r.plan;
-      return `{${d > 0 ? "bad" : "good"}|${d > 0 ? "▲" : "▼"} ${euro.format(Math.abs(d))}} {muted|${percent.format(Math.abs(d) / r.plan)}}`;
+      const verdict = d > 0 ? `{bad|▲ ${euro.format(d)} drüber}` : `{good|${euro.format(-d)} übrig}`;
+      return `{amount|${euro.format(r.actual)}} {muted|von ${euro.format(r.plan)}}\n${verdict}`;
     });
+    // On a phone the verdict moves under the category name; two fixed columns leave no room.
+    const narrow = document.getElementById("chart-categories").clientWidth < 560;
+    const richText = {
+      name: { color: css("--text-secondary"), fontSize: 12.5 },
+      amount: { color: css("--text-primary"), fontWeight: 600, fontSize: 12 },
+      bad: { color: css("--critical-text"), fontWeight: 600, fontSize: 11.5 },
+      good: { color: css("--good-text"), fontWeight: 600, fontSize: 11.5 },
+      muted: { color: css("--text-muted"), fontSize: 11.5 },
+    };
+    const narrowLabels = ordered.map((r, i) => `{name|${r.category}}\n${deviations[i].split("\n")[1]}`);
     chart("chart-categories").setOption({
-      textStyle: baseTextStyle(), grid: { left: 120, right: 150, top: 6, bottom: 24 },
+      textStyle: baseTextStyle(), grid: narrow ? { left: 128, right: 12, top: 6, bottom: 24 } : { left: 120, right: 170, top: 6, bottom: 24 },
       tooltip: tooltip({ trigger: "axis", axisPointer: { type: "shadow", shadowStyle: { color: css("--surface-2") } },
         formatter: p => { const r = ordered[p[0].dataIndex]; const d = r.actual - r.plan;
           return `<b>${r.category}</b><br>Ist <b>${euro.format(r.actual)}</b><br>Plan ${euro.format(r.plan)}<br>${d > 0 ? "▲ über" : "▼ unter"} Plan: <b>${euro.format(Math.abs(d))}</b>`; } }),
-      xAxis: valueAxis(),
-      yAxis: [
-        categoryAxis(names, { axisLabel: { color: css("--text-secondary"), width: 110, overflow: "truncate" } }),
-        categoryAxis(deviations, { position: "right", axisLine: { show: false },
-          axisLabel: { align: "right", margin: 140, width: 140,
-            rich: { bad: { color: css("--critical-text"), fontWeight: 600, fontSize: 12 },
-                    good: { color: css("--good-text"), fontWeight: 600, fontSize: 12 },
-                    muted: { color: css("--text-muted"), fontSize: 11.5 } } } }),
-      ],
+      xAxis: valueAxis(narrow ? { splitNumber: 2 } : {}),
+      yAxis: narrow
+        ? [categoryAxis(narrowLabels, { axisLabel: { lineHeight: 16, width: 120, overflow: "truncate", rich: richText } })]
+        : [
+            categoryAxis(names, { axisLabel: { color: css("--text-secondary"), width: 110, overflow: "truncate" } }),
+            categoryAxis(deviations, { position: "right", axisLine: { show: false },
+              axisLabel: { align: "right", margin: 160, width: 160, lineHeight: 16, rich: richText } }),
+          ],
       series: [
         { type: "bar", barMaxWidth: 14, data: ordered.map(r => ({
             value: Math.round(r.actual),
@@ -535,6 +558,7 @@ window.BAUPLAN_DATA = /*__BAUPLAN_DATA__*/null;
           itemStyle: { color: css("--plan") }, z: 5, silent: true },
       ],
     }, true);
+    charts["chart-categories"].__categories = names;
   }
 
   function renderTreemap() {
@@ -577,12 +601,12 @@ window.BAUPLAN_DATA = /*__BAUPLAN_DATA__*/null;
     const lowest = Math.min(0, ...rows.map(r => r.effect)) * labelRoom;
     const highest = Math.max(0, ...rows.map(r => r.effect)) * labelRoom;
     chart("chart-effects").setOption({
-      textStyle: baseTextStyle(), grid: { left: 210, right: 24, top: 6, bottom: 24 },
+      textStyle: baseTextStyle(), grid: { left: document.getElementById("chart-effects").clientWidth < 560 ? 120 : 210, right: 24, top: 6, bottom: 24 },
       tooltip: tooltip({ trigger: "axis", axisPointer: { type: "shadow", shadowStyle: { color: css("--surface-2") } },
         formatter: p => { const r = rows[p[0].dataIndex];
           return `<b>${r.line.description}</b> <span style="color:${css("--text-muted")}">${r.line.category}</span><br>Ist ${euro.format(r.actual)} · Plan ${euro.format(r.plan)}<br>${r.effect < 0 ? "▼ kostet" : "▲ spart"} <b>${euro.format(Math.abs(r.effect))}</b> · ${r.count} Buchungen`; } }),
       xAxis: valueAxis({ min: Math.floor(lowest / 1000) * 1000, max: Math.ceil(highest / 1000) * 1000 }),
-      yAxis: categoryAxis(rows.map(r => r.line.description), { axisLabel: { color: css("--text-secondary"), width: 200, overflow: "truncate" } }),
+      yAxis: categoryAxis(rows.map(r => r.line.description), { axisLabel: { color: css("--text-secondary"), width: document.getElementById("chart-effects").clientWidth < 560 ? 112 : 200, overflow: "truncate" } }),
       series: [{
         type: "bar", barMaxWidth: 14,
         data: rows.map(r => ({ value: Math.round(r.effect),
@@ -779,6 +803,7 @@ window.BAUPLAN_DATA = /*__BAUPLAN_DATA__*/null;
       MONTH_NAMES.map((name, i) => `<button class="${state.month === i + 1 ? "active" : ""}" data-month="${i + 1}" ${i + 1 > last ? "disabled" : ""}>${name}</button>`).join("");
     document.getElementById("category").value = state.category;
     const chips = [];
+    if (state.category) chips.push(`<span class="chip">Filter: ${escapeHtml(state.category)} <button data-clear="category" aria-label="Kategoriefilter entfernen">×</button></span>`);
     if (state.line) chips.push(`<span class="chip">Planzeile: ${escapeHtml(planById.get(state.line)?.description ?? state.line)} <button data-clear="line" aria-label="Filter entfernen">×</button></span>`);
     document.getElementById("active-chips").innerHTML = chips.join("");
     document.getElementById("scope").textContent = scopeLabel();
@@ -831,7 +856,7 @@ window.BAUPLAN_DATA = /*__BAUPLAN_DATA__*/null;
     chart("chart-months").on("click", p => update({ month: state.month === p.dataIndex + 1 ? null : p.dataIndex + 1 }));
     chart("chart-balance").on("click", p => update({ month: state.month === p.dataIndex + 1 ? null : p.dataIndex + 1 }));
     chart("chart-categories").on("click", p => {
-      const name = charts["chart-categories"].getOption().yAxis[0].data[p.dataIndex];
+      const name = charts["chart-categories"].__categories[p.dataIndex];
       update({ category: state.category === name ? "" : name, line: "" });
     });
     chart("chart-effects").on("click", p => { const r = charts["chart-effects"].__rows[p.dataIndex]; update({ line: r.line.id }); scrollToTable(); });

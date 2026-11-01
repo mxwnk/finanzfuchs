@@ -1,4 +1,4 @@
-"""The HTML pages: overview, assigning, import, plan and the Excel export."""
+"""The HTML pages: year overview, assigning, import, plan and the Excel export."""
 
 from datetime import date
 from typing import Any
@@ -23,13 +23,13 @@ EXPORT_MEDIA_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml
 router = APIRouter()
 
 
-@router.get("/", response_class=HTMLResponse)
-def overview(user: PageUser, context: Context) -> HTMLResponse:
+@router.get("/jahr", response_class=HTMLResponse)
+def year_overview(user: PageUser, context: Context) -> HTMLResponse:
     with context.database.connect() as connection:
         plan = PlanStore(connection).lines()
         entries = TransactionStore(connection).entries()
     attention = sum(1 for entry in entries if entry.needs_attention)
-    nav = _render_nav("overview", user, attention)
+    nav = _render_nav("year", user, attention)
     return HTMLResponse(render_dashboard(build_dataset(plan, entries, context.now()), nav))
 
 
