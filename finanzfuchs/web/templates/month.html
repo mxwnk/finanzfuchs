@@ -61,6 +61,9 @@
     <div id="month-chart" class="month-chart"></div>
   </article>
 
+</section>
+
+<section class="month-cards">
   <article class="card budgets">
     <h2>Budgets</h2>
     <p class="sub">Strich = wo ihr heute laut Plan stehen solltet</p>
@@ -89,24 +92,38 @@
 
   <article class="card checklist">
     <h2>Feste Ein- und Ausgänge</h2>
-    <p class="sub">Was jeden Monat kommen sollte</p>
-    {% for group_name, is_income in [("Einnahmen", true), ("Ausgaben", false)] %}
+    <p class="sub">Was jeden Monat kommen sollte – zum Aufklappen</p>
+    {% for group_name, is_income, group_key in [("Einnahmen", true, "income"), ("Ausgaben", false, "expenses")] %}
     {% set items = view.fixed_items|selectattr("is_income", "equalto", is_income)|list %}
     {% if items %}
-    <h3>{{ group_name }}</h3>
-    <ul class="check-list">
-      {% for item in items %}
-      <li class="{{ item.status }}">
-        <span class="mark" aria-hidden="true">{% if item.status == "received" %}✓{% elif item.status == "pending" %}…{% else %}!{% endif %}</span>
-        <span class="name">{{ item.line.description }}<span class="sr-only"> – {% if item.status == "received" %}eingegangen{% elif item.status == "pending" %}noch offen{% else %}Betrag weicht ab{% endif %}</span></span>
-        <span class="num value">
-          {% if item.status == "deviates" %}<b class="bad-text">{{ item.actual|euro }}</b> <span class="muted">statt {{ item.expected|euro }}</span>
-          {% elif item.status == "pending" %}<span class="muted">{{ item.expected|euro }}</span>
-          {% else %}{{ item.actual|euro }}{% if item.actual - item.expected >= 1 %} <span class="muted">(+{{ (item.actual - item.expected)|euro }})</span>{% endif %}{% endif %}
+    {% set received = items|selectattr("status", "equalto", "received")|list|length %}
+    {% set pending = items|selectattr("status", "equalto", "pending")|list|length %}
+    {% set deviating = items|selectattr("status", "equalto", "deviates")|list|length %}
+    <details class="check-group" data-group="{{ group_key }}">
+      <summary>
+        <span class="chevron" aria-hidden="true">›</span>
+        <span class="group-name">{{ group_name }}</span>
+        <span class="group-counts small">
+          {% if received %}<span class="count-badge received" title="eingegangen">✓ {{ received }}</span>{% endif %}
+          {% if pending %}<span class="count-badge pending" title="noch offen">… {{ pending }}</span>{% endif %}
+          {% if deviating %}<span class="count-badge deviates" title="Betrag weicht ab">! {{ deviating }}</span>{% endif %}
         </span>
-      </li>
-      {% endfor %}
-    </ul>
+        <span class="group-total num">{{ items|sum(attribute="actual")|euro }} <span class="muted">von {{ items|sum(attribute="expected")|euro }}</span></span>
+      </summary>
+      <ul class="check-list">
+        {% for item in items %}
+        <li class="{{ item.status }}">
+          <span class="mark" aria-hidden="true">{% if item.status == "received" %}✓{% elif item.status == "pending" %}…{% else %}!{% endif %}</span>
+          <span class="name">{{ item.line.description }}<span class="sr-only"> – {% if item.status == "received" %}eingegangen{% elif item.status == "pending" %}noch offen{% else %}Betrag weicht ab{% endif %}</span></span>
+          <span class="num value">
+            {% if item.status == "deviates" %}<b class="bad-text">{{ item.actual|euro }}</b> <span class="muted">statt {{ item.expected|euro }}</span>
+            {% elif item.status == "pending" %}<span class="muted">{{ item.expected|euro }}</span>
+            {% else %}{{ item.actual|euro }}{% if item.actual - item.expected >= 1 %} <span class="muted">(+{{ (item.actual - item.expected)|euro }})</span>{% endif %}{% endif %}
+          </span>
+        </li>
+        {% endfor %}
+      </ul>
+    </details>
     {% endif %}
     {% endfor %}
   </article>

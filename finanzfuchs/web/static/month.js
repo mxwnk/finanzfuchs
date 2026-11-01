@@ -55,3 +55,18 @@
   window.addEventListener("resize", () => { chart.resize(); render(); });
   matchMedia("(prefers-color-scheme: dark)").addEventListener("change", render);
 })();
+
+// Fixed income and debits: remember which groups were opened.
+(() => {
+  "use strict";
+  const STORAGE_KEY = "finanzfuchs-open-groups";
+  const read = () => { try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); } catch (error) { return []; } };
+  const opened = new Set(read());
+  document.querySelectorAll("details.check-group").forEach(group => {
+    group.open = opened.has(group.dataset.group);
+    group.addEventListener("toggle", () => {
+      if (group.open) opened.add(group.dataset.group); else opened.delete(group.dataset.group);
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify([...opened])); } catch (error) { /* private mode: not remembered */ }
+    });
+  });
+})();
