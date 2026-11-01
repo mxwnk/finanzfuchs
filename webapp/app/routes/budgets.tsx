@@ -76,7 +76,7 @@ export default function BudgetsPage({ loaderData, actionData }: Route.ComponentP
         />
       ))}
 
-      <div className="sticky bottom-3 flex justify-end">
+      <div className="sticky bottom-[calc(6.25rem+env(safe-area-inset-bottom))] flex justify-end sm:bottom-3">
         <button type="submit" disabled={isSaving} className="rounded-xl bg-fox px-6 py-3 font-semibold text-white shadow-lg hover:brightness-105 disabled:opacity-60">
           {isSaving ? "Speichere …" : "Budgets speichern"}
         </button>
@@ -96,11 +96,11 @@ function CategoryItems({ category, items, errors }: { category: Category; items:
           {formatEuro(monthly)} im Monat{yearly > 0 ? ` · ${formatEuro(yearly)} im Jahr` : ""}
         </p>
       </div>
-      <ul className="space-y-2">
+      <ul className="divide-y divide-stone-200 sm:space-y-2 sm:divide-y-0 dark:divide-stone-800">
         {items.map((item) => (
           <ExistingItem key={item.id} item={item} error={errors[`${item.id}`]} />
         ))}
-        <li className="border-t border-dashed border-stone-200 pt-2 dark:border-stone-800">
+        <li className="border-t border-dashed border-stone-200 py-3 sm:pt-2 sm:pb-0 dark:border-stone-800">
           <input type="hidden" name="new" value={category} />
           <ItemFields prefix={`new`} category={category} name="" amountCents={null} rhythm="Monat" placeholder="Neuer Posten …" />
           {errors[`new-${category}`] && <p className="text-xs text-red-700">{errors[`new-${category}`]}</p>}
@@ -144,7 +144,7 @@ function ExistingItem({ item, error }: { item: BudgetItem; error?: string }) {
     </button>
   );
   return (
-    <li>
+    <li className="py-3 first:pt-0 sm:py-0">
       <input type="hidden" name="item" value={item.id} />
       <input type="hidden" name={`category-${item.id}`} value={item.category} />
       {isMarked && <input type="hidden" name={`remove-${item.id}`} value="on" />}
@@ -161,24 +161,25 @@ function ExistingItem({ item, error }: { item: BudgetItem; error?: string }) {
 function ItemFields({ prefix, category, name, amountCents, rhythm, placeholder, action }: ItemFieldsProps) {
   const field = (key: string) => (category ? `${prefix}-${key}-${category}` : `${key}-${prefix}`);
   return (
-    <div className="grid grid-cols-[1fr_6.5rem_7.5rem_2.25rem] items-center gap-2">
-      <input name={field("name")} defaultValue={name} placeholder={placeholder} aria-label="Name" className={input} />
+    // Phones: name and bin on top, amount and rhythm below. Wider screens: one row.
+    <div className="grid grid-cols-[1fr_1fr_2.25rem] items-center gap-2 sm:grid-cols-[1fr_6.5rem_7.5rem_2.25rem]">
+      <input name={field("name")} defaultValue={name} placeholder={placeholder} aria-label="Name" className={`${input} col-span-2 min-w-0 sm:col-span-1`} />
       <input
         name={field("amount")}
         defaultValue={amountCents === null ? "" : String(amountCents / 100).replace(".", ",")}
         inputMode="decimal"
         placeholder="0"
         aria-label="Betrag in Euro"
-        className={`${input} num text-right`}
+        className={`${input} num min-w-0 text-right`}
       />
-      <select name={field("rhythm")} defaultValue={rhythm} aria-label="Rhythmus" className={input}>
+      <select name={field("rhythm")} defaultValue={rhythm} aria-label="Rhythmus" className={`${input} min-w-0`}>
         {RHYTHMS.map((option) => (
           <option key={option} value={option}>
             {RHYTHM_LABELS[option]}
           </option>
         ))}
       </select>
-      {action ?? <span aria-hidden />}
+      <div className="col-start-3 row-start-1 sm:col-start-4">{action}</div>
     </div>
   );
 }
