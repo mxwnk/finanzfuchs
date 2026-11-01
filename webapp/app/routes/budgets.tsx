@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { Form, redirect, useNavigation } from "react-router";
 
 import { addBudgetItem, budgetItems, deleteBudgetItem, getDatabase, updateBudgetItem } from "~/.server/database";
+import { TrashIcon, UndoIcon } from "~/components/icons";
 import { Card } from "~/components/ui";
 import { readBudgetForm } from "~/domain/budget-form";
 import { type BudgetItem, RHYTHMS, type Rhythm } from "~/domain/budget-items";
@@ -96,15 +98,7 @@ function CategoryItems({ category, items, errors }: { category: Category; items:
       </div>
       <ul className="space-y-2">
         {items.map((item) => (
-          <li key={item.id}>
-            <input type="hidden" name="item" value={item.id} />
-            <input type="hidden" name={`category-${item.id}`} value={item.category} />
-            <ItemFields prefix={`${item.id}`} name={item.name} amountCents={item.amountCents} rhythm={item.rhythm} />
-            <label className="mt-1 inline-flex items-center gap-1.5 text-xs text-stone-500">
-              <input type="checkbox" name={`remove-${item.id}`} /> entfernen
-            </label>
-            {errors[`${item.id}`] && <p className="text-xs text-red-700">{errors[`${item.id}`]}</p>}
-          </li>
+          <ExistingItem key={item.id} item={item} error={errors[`${item.id}`]} />
         ))}
         <li className="border-t border-dashed border-stone-200 pt-2 dark:border-stone-800">
           <input type="hidden" name="new" value={category} />
@@ -123,13 +117,51 @@ interface ItemFieldsProps {
   amountCents: number | null;
   rhythm: Rhythm;
   placeholder?: string;
+  /** The button in the last column; new rows leave it empty. */
+  action?: React.ReactNode;
+}
+
+/**
+ * Clicking the bin only marks the item: it is removed when the budgets are saved, so a slip of
+ * the finger costs nothing.
+ */
+function ExistingItem({ item, error }: { item: BudgetItem; error?: string }) {
+  const [isMarked, setMarked] = useState(false);
+  const removeButton = (
+    <button
+      type="button"
+      onClick={() => setMarked(!isMarked)}
+      aria-pressed={isMarked}
+      aria-label={isMarked ? `${item.name} behalten` : `${item.name} entfernen`}
+      title={isMarked ? "Doch behalten" : "Entfernen"}
+      className={`grid size-9 place-items-center rounded-lg border transition ${
+        isMarked
+          ? "border-stone-300 bg-stone-100 text-stone-700 hover:bg-stone-200 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100 dark:hover:bg-stone-700"
+          : "border-transparent text-stone-400 hover:border-red-200 hover:bg-red-50 hover:text-red-600 dark:hover:border-red-900 dark:hover:bg-red-950 dark:hover:text-red-400"
+      }`}
+    >
+      {isMarked ? <UndoIcon /> : <TrashIcon />}
+    </button>
+  );
+  return (
+    <li>
+      <input type="hidden" name="item" value={item.id} />
+      <input type="hidden" name={`category-${item.id}`} value={item.category} />
+      {isMarked && <input type="hidden" name={`remove-${item.id}`} value="on" />}
+      <div className={isMarked ? "[&_input]:opacity-50 [&_select]:opacity-50 [&_input:first-child]:line-through" : ""}>
+        <ItemFields prefix={`${item.id}`} name={item.name} amountCents={item.amountCents} rhythm={item.rhythm} action={removeButton} />
+      </div>
+      {isMarked && <p className="mt-1 text-xs text-red-700 dark:text-red-400">Wird beim Speichern entfernt.</p>}
+      {error && <p className="text-xs text-red-700">{error}</p>}
+    </li>
+  );
 }
 
 /** Existing items post `name-<id>`, new ones `new-name-<category>`. */
-function ItemFields({ prefix, category, name, amountCents, rhythm, placeholder }: ItemFieldsProps) {
+function ItemFields({ prefix, category, name, amountCents, rhythm, placeholder, action }: ItemFieldsProps) {
   const field = (key: string) => (category ? `${prefix}-${key}-${category}` : `${key}-${prefix}`);
   return (
-    <div className="grid grid-cols-[1fr_6.5rem_7.5rem] gap-2">
+    <div className="grid grid-cols-[1fr_6.5rem_7.5rem_2.25rem] items-center gap-2">
       <input name={field("name")} defaultValue={name} placeholder={placeholder} aria-label="Name" className={input} />
       <input
         name={field("amount")}
@@ -146,6 +178,7 @@ function ItemFields({ prefix, category, name, amountCents, rhythm, placeholder }
           </option>
         ))}
       </select>
+      {action ?? <span aria-hidden />}
     </div>
   );
 }
