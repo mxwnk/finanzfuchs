@@ -1,5 +1,0 @@
-node_modules/
-/build/
-/.react-router/
-# Local database with the family transactions.
-/data/

@@ -1,20 +1,16 @@
-.venv/
-__pycache__/
-*.pyc
-.pytest_cache/
-.ruff_cache/
+node_modules/
+/build/
+/.react-router/
 .env
 *.env
 !.env.example
-# Bank sessions and raw bank responses: private and not reproducible after 90 days.
+# The database with the family transactions and the DKB exports.
 data/
-# Enable Banking application keys.
-*.pem
 .DS_Store
-~$*.xlsx
 # DKB exports and other bank data.
 *.csv
-# Local preview server config.
-.claude/
 # The old plan holds IBANs of the family accounts; it stays local.
 *.xlsx
+~$*.xlsx
+# Local preview server config.
+.claude/

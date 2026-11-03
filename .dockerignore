@@ -1,6 +1,9 @@
-# The image needs only the package and its locked dependencies; never the private data folder.
+# The image is built from the code alone; never the private data folder or local secrets.
 *
-!pyproject.toml
-!uv.lock
-!finanzfuchs
-finanzfuchs/**/__pycache__
+!app
+!public
+!package.json
+!package-lock.json
+!react-router.config.ts
+!tsconfig.json
+!vite.config.ts

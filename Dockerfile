@@ -1,25 +1,21 @@
-FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim
-
-ENV UV_COMPILE_BYTECODE=1 \
-    UV_LINK_MODE=copy \
-    UV_PYTHON_DOWNLOADS=never \
-    PYTHONUNBUFFERED=1 \
-    FINANZFUCHS_HOST=0.0.0.0 \
-    FINANZFUCHS_PORT=8000 \
-    FINANZFUCHS_DATA_DIR=/app/data
-
+FROM node:24-alpine AS build
 WORKDIR /app
-
 # Dependencies first so code changes do not invalidate this layer.
-COPY pyproject.toml uv.lock ./
-RUN uv sync --frozen --no-dev --no-install-project
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY . .
+RUN npm run build && npm prune --omit=dev
 
-COPY finanzfuchs ./finanzfuchs
-RUN uv sync --frozen --no-dev
-
+FROM node:24-alpine
+ENV NODE_ENV=production \
+    PORT=3000 \
+    FINANZFUCHS_DATABASE=/app/data/finanzfuchs.db \
+    NODE_OPTIONS=--disable-warning=ExperimentalWarning
+WORKDIR /app
+COPY --from=build /app/package.json ./
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/build ./build
 # The compose file runs it as the host user that owns the data folder.
-RUN useradd --system --uid 10001 finanzfuchs
-USER finanzfuchs
-
-EXPOSE 8000
-CMD ["/app/.venv/bin/python", "-m", "finanzfuchs.web"]
+USER node
+EXPOSE 3000
+CMD ["node_modules/.bin/react-router-serve", "./build/server/index.js"]
