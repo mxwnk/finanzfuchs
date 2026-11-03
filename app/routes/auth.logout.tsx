@@ -1,6 +1,7 @@
 import { data, Link } from "react-router";
 
-import { getAuth, LOGIN_PATH } from "~/.server/auth/session";
+import { getAuth } from "~/.server/auth/session";
+import { LOGIN_PATH } from "~/auth-paths";
 import { AuthPage } from "~/components/auth-page";
 
 import type { Route } from "./+types/auth.logout";

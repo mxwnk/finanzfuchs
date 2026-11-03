@@ -1,9 +1,9 @@
 import { data, Link, redirect } from "react-router";
 
 import { finishLogin, LoginRejectedError } from "~/.server/auth/login";
-import { getAuth, LOGIN_PATH } from "~/.server/auth/session";
-import { CALLBACK_PATH } from "~/.server/config";
+import { getAuth } from "~/.server/auth/session";
 import { logger } from "~/.server/logger";
+import { CALLBACK_PATH, LOGIN_PATH } from "~/auth-paths";
 import { AuthPage } from "~/components/auth-page";
 
 import type { Route } from "./+types/auth.callback";

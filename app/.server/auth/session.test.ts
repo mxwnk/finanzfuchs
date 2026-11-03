@@ -3,7 +3,9 @@ import { describe, expect, it } from "vitest";
 
 import { readAuthSettings } from "~/.server/config";
 
-import { createLoginSessionStorage, LOGIN_PATH, requireUser, userContext } from "./session";
+import { LOGIN_PATH } from "~/auth-paths";
+
+import { createLoginSessionStorage, requireUser, userContext } from "./session";
 
 const sessions = createLoginSessionStorage(
   readAuthSettings({

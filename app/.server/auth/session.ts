@@ -1,11 +1,11 @@
 import { createContext, createCookieSessionStorage, type MiddlewareFunction, redirect, type SessionStorage } from "react-router";
 
 import { type AuthSettings, readAuthSettings, usesHttps } from "~/.server/config";
+import { LOGIN_PATH } from "~/auth-paths";
 
 import { type IdentityProvider, type PendingLogin, PocketId } from "./identity-provider";
 import type { SessionUser } from "./login";
 
-export const LOGIN_PATH = "/auth/login";
 const SESSION_LIFETIME_SECONDS = 30 * 24 * 60 * 60;
 
 interface SessionData {

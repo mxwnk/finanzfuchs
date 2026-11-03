@@ -1,3 +1,5 @@
+import { CALLBACK_PATH } from "~/auth-paths";
+
 /** Settings from the environment: the untracked `.env` locally, the container env on the Pi. */
 export interface AuthSettings {
   baseUrl: string;
@@ -17,7 +19,6 @@ const DEFAULT_ALLOWED_GROUP = "fuxbau";
 // The secret signs the session cookie; a short one could be guessed.
 const MIN_SESSION_SECRET_LENGTH = 32;
 
-export const CALLBACK_PATH = "/auth/callback";
 
 export function readAuthSettings(environment: Record<string, string | undefined> = process.env): AuthSettings {
   const missing = REQUIRED_VARIABLES.filter((name) => !environment[name]);
