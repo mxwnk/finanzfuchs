@@ -31,6 +31,16 @@ async function verifiedLogin(provider: IdentityProvider, callback: URL, pending:
   try {
     return await provider.finishLogin(callback, pending);
   } catch (error) {
-    throw new LoginRejectedError(`Pocket ID login failed: ${error instanceof Error ? error.message : String(error)}`);
+    throw new LoginRejectedError(`Pocket ID login failed: ${describe(error)}`);
   }
+}
+
+/** openid-client puts the provider's own answer into `error` and `error_description`. */
+function describe(error: unknown): string {
+  const message = error instanceof Error ? error.message : String(error);
+  if (typeof error !== "object" || error === null) {
+    return message;
+  }
+  const answer = [Reflect.get(error, "error"), Reflect.get(error, "error_description")].filter((part) => typeof part === "string");
+  return answer.length > 0 ? `${message} (${answer.join(": ")})` : message;
 }

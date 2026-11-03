@@ -56,4 +56,11 @@ describe("finishLogin", () => {
 
     await expect(finishLogin(provider, CALLBACK, PENDING, "fuxbau")).rejects.toThrow(/nonce/);
   });
+
+  it("names the provider's own error so the log tells what went wrong", async () => {
+    const answer = Object.assign(new Error("server responded with an error in the response body"), { error: "Record not found" });
+    const provider = new FakePocketId(answer);
+
+    await expect(finishLogin(provider, CALLBACK, PENDING, "fuxbau")).rejects.toThrow(/\(Record not found\)/);
+  });
 });

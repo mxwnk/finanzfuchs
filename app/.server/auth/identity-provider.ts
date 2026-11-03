@@ -62,10 +62,14 @@ export class PocketId implements IdentityProvider {
     return { subject: claims.sub, name: typeof claims.name === "string" ? claims.name : null, groups: groupsFrom(claims.groups) };
   }
 
-  /** Discovery is fetched once; a failed attempt is retried on the next login. */
+  /**
+   * Discovery is fetched once; a failed attempt is retried on the next login. The secret goes in
+   * the form body: for Basic auth openid-client encodes the `-` of the client id as `%2D`, which
+   * Pocket ID does not decode and answers "Record not found".
+   */
   private discover(): Promise<oidc.Configuration> {
     this.configuration ??= oidc
-      .discovery(new URL(this.settings.issuer), this.settings.clientId, undefined, oidc.ClientSecretBasic(this.settings.clientSecret))
+      .discovery(new URL(this.settings.issuer), this.settings.clientId, undefined, oidc.ClientSecretPost(this.settings.clientSecret))
       .catch((error: unknown) => {
         this.configuration = undefined;
         throw error;
