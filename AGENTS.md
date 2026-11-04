@@ -13,7 +13,8 @@ in `docs/decisions.md`; read it before changing behavior.
   `budgets.tsx`, `assign.tsx`, `import.tsx`, `auth.*` (Pocket ID login and logout), `healthz.ts`.
 - `app/domain/` -- pure logic with tests: `money.ts` (cents, German amounts), `month.ts`
   (`YYYY-MM`), `categories.ts`, `budget-items.ts` (monthly and yearly items), `budget-form.ts`,
-  `overview.ts`, `reserve.ts`, `dkb-export.server.ts` (the DKB "Umsatzliste" CSV).
+  `overview.ts`, `reserve.ts`, `learned-assignment.ts` (categories from earlier payments),
+  `dkb-export.server.ts` (the DKB "Umsatzliste" CSV).
 - `app/.server/` -- `database.ts` (`node:sqlite`, numbered migrations on `PRAGMA user_version`),
   `config.ts` (settings from the environment), `logger.ts`, `auth/` (`identity-provider.ts` with
   `openid-client`, `login.ts`, `session.ts` with the signed cookie and the login middleware).

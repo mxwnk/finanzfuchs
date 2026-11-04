@@ -8,8 +8,12 @@ import type { BankTransaction } from "~/domain/dkb-export.server";
 import {
   addBudgetItem,
   addTransactions,
+  assignAutomatically,
+  assignedSpending,
   assignTransaction,
+  automaticallyAssigned,
   budgetItems,
+  confirmAutomaticAssignments,
   countUnassignedSpending,
   deleteBudgetItem,
   type NewBudgetItem,
@@ -76,6 +80,56 @@ describe("transactions", () => {
 
   it("reports when the transaction does not exist", () => {
     expect(assignTransaction(database, "missing", "Freizeit")).toBe(false);
+  });
+});
+
+describe("automatic assignment", () => {
+  it("lists assigned spending to learn from, but not income or open ones", () => {
+    addTransactions(database, [bankTransaction("done"), bankTransaction("open"), bankTransaction("income", "2026-11-01", 300000)]);
+    assignTransaction(database, "done", "Täglicher Bedarf");
+    assignTransaction(database, "income", "Wohnen");
+
+    expect(assignedSpending(database).map((transaction) => transaction.id)).toEqual(["done"]);
+  });
+
+  it("assigns learned categories and keeps them for review", () => {
+    addTransactions(database, [bankTransaction("rewe")]);
+
+    const assigned = assignAutomatically(database, [{ transactionId: "rewe", category: "Täglicher Bedarf", budgetItemId: null }]);
+
+    expect(assigned).toBe(1);
+    expect(automaticallyAssigned(database)).toMatchObject([{ id: "rewe", category: "Täglicher Bedarf" }]);
+    expect(countUnassignedSpending(database)).toBe(0);
+  });
+
+  it("never overwrites a category that is already set", () => {
+    addTransactions(database, [bankTransaction("rewe")]);
+    assignTransaction(database, "rewe", "Freizeit");
+
+    const assigned = assignAutomatically(database, [{ transactionId: "rewe", category: "Täglicher Bedarf", budgetItemId: null }]);
+
+    expect(assigned).toBe(0);
+    expect(transactionsInMonth(database, "2026-11")[0].category).toBe("Freizeit");
+    expect(automaticallyAssigned(database)).toEqual([]);
+  });
+
+  it("takes a payment out of review once it is assigned by hand", () => {
+    addTransactions(database, [bankTransaction("rewe")]);
+    assignAutomatically(database, [{ transactionId: "rewe", category: "Täglicher Bedarf", budgetItemId: null }]);
+
+    assignTransaction(database, "rewe", "Freizeit");
+
+    expect(automaticallyAssigned(database)).toEqual([]);
+  });
+
+  it("keeps the categories when the review is confirmed", () => {
+    addTransactions(database, [bankTransaction("rewe")]);
+    assignAutomatically(database, [{ transactionId: "rewe", category: "Täglicher Bedarf", budgetItemId: null }]);
+
+    confirmAutomaticAssignments(database);
+
+    expect(automaticallyAssigned(database)).toEqual([]);
+    expect(transactionsInMonth(database, "2026-11")[0].category).toBe("Täglicher Bedarf");
   });
 });
 

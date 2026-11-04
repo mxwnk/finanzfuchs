@@ -5,6 +5,7 @@ import { DatabaseSync } from "node:sqlite";
 import type { BudgetItem } from "~/domain/budget-items";
 import type { Assignment } from "~/domain/categories";
 import type { BankTransaction } from "~/domain/dkb-export.server";
+import type { LearnedAssignment } from "~/domain/learned-assignment";
 import type { Month } from "~/domain/month";
 import type { AssignedTransaction } from "~/domain/overview";
 
@@ -86,15 +87,51 @@ export function unassignedSpending(database: Database): AssignedTransaction[] {
   return rows.map(toAssignedTransaction);
 }
 
+/** Money that left the account and already has a category: what automatic assignment learns from. */
+export function assignedSpending(database: Database): AssignedTransaction[] {
+  const rows = database.prepare(`SELECT * FROM transactions WHERE category IS NOT NULL AND amount_cents < 0`).all();
+  return rows.map(toAssignedTransaction);
+}
+
 /**
- * Returns false when there is no such transaction. `budgetItemId` marks a payment of a yearly
- * item, which is paid from the reserve instead of the month's budget.
+ * Assigns by hand. Returns false when there is no such transaction. `budgetItemId` marks a
+ * payment of a yearly item, which is paid from the reserve instead of the month's budget.
  */
 export function assignTransaction(database: Database, id: string, assignment: Assignment, budgetItemId: number | null = null): boolean {
   const result = database
-    .prepare(`UPDATE transactions SET category = ?, budget_item_id = ? WHERE id = ?`)
+    .prepare(`UPDATE transactions SET category = ?, budget_item_id = ?, assigned_automatically = 0 WHERE id = ?`)
     .run(assignment, budgetItemId, id);
   return Number(result.changes) > 0;
+}
+
+/**
+ * Stores what was learned, marked for review; a transaction that has a category meanwhile keeps
+ * it. Returns how many transactions were assigned.
+ */
+export function assignAutomatically(database: Database, assignments: LearnedAssignment[]): number {
+  const update = database.prepare(
+    `UPDATE transactions SET category = ?, budget_item_id = ?, assigned_automatically = 1 WHERE id = ? AND category IS NULL`,
+  );
+  let assigned = 0;
+  inTransaction(database, () => {
+    for (const assignment of assignments) {
+      assigned += Number(update.run(assignment.category, assignment.budgetItemId, assignment.transactionId).changes);
+    }
+  });
+  return assigned;
+}
+
+/** Automatic assignments nobody has looked at yet, newest first. */
+export function automaticallyAssigned(database: Database): AssignedTransaction[] {
+  const rows = database
+    .prepare(`SELECT * FROM transactions WHERE assigned_automatically = 1 ORDER BY booking_date DESC, rowid DESC`)
+    .all();
+  return rows.map(toAssignedTransaction);
+}
+
+/** Accepts every automatic assignment as if it had been made by hand. */
+export function confirmAutomaticAssignments(database: Database): void {
+  database.prepare(`UPDATE transactions SET assigned_automatically = 0 WHERE assigned_automatically = 1`).run();
 }
 
 /** All payments of yearly items in a year, for the reserve. */
@@ -153,7 +190,12 @@ const BUDGET_ITEMS = `
   DROP TABLE budgets;
 `;
 
-const MIGRATIONS = [INITIAL_SCHEMA, BUDGET_ITEMS];
+/** Version 3: categories learned from earlier payments wait for a look on Zuordnen. */
+const AUTOMATIC_ASSIGNMENT = `
+  ALTER TABLE transactions ADD COLUMN assigned_automatically INTEGER NOT NULL DEFAULT 0;
+`;
+
+const MIGRATIONS = [INITIAL_SCHEMA, BUDGET_ITEMS, AUTOMATIC_ASSIGNMENT];
 
 /** Runs every schema step the database lacks; `user_version` counts the steps done. */
 function migrate(database: Database): void {

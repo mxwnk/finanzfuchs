@@ -20,6 +20,11 @@ replaced the first Python app on 2026-11-03; what was learned from it is at the 
   reserve's balance for the year and which yearly items are paid.
 - **Keine Ausgabe** (`ignoriert`) marks transfers between own accounts; they never count.
 - **Income is not assigned**; only money that left the account waits on *Zuordnen*.
+- **The import assigns what earlier payments teach**, without rules to keep: the same
+  counterparty and amount get the category (and yearly item) chosen last time; a new amount gets
+  the counterparty's category when at least 80 % of at least two earlier payments had it. Mixed
+  counterparties such as PayPal stay open. Automatic assignments are marked and wait on
+  *Zuordnen* until someone confirms them or picks another category; they never overwrite one.
 - **Refunds reduce the spending** of the category they are assigned to.
 - **Bargeld counts as Täglicher Bedarf.**
 - **Removing a budget item only marks it**; it is gone when the budgets are saved, so a slip of
@@ -52,7 +57,7 @@ replaced the first Python app on 2026-11-03; what was learned from it is at the 
   dropdown among 1.282 rows) and on formulas (the Sheets API parses them in the spreadsheet's
   locale; `LET` needs `ARRAYFORMULA` to evaluate `SEQUENCE`).
 - **Plan lines, rules and a year dashboard were too much**: the family wants to know how the
-  current month is going, and assigning by category is fast enough without rules.
+  current month is going. Hand-kept rules are replaced by learning from earlier assignments.
 - **The v1 data was taken over**: transactions and their categories (unplanned lines mapped to the
   closest category), the plan lines as budget items, and the payments of yearly lines linked to
   their items.

@@ -1,9 +1,18 @@
 import { useState } from "react";
 import { Form, Link, useNavigation } from "react-router";
 
-import { addTransactions, getDatabase } from "~/.server/database";
+import {
+  addTransactions,
+  assignAutomatically,
+  assignedSpending,
+  countUnassignedSpending,
+  type Database,
+  getDatabase,
+  unassignedSpending,
+} from "~/.server/database";
 import { Card } from "~/components/ui";
 import { DkbExportError, parseDkbExport } from "~/domain/dkb-export.server";
+import { learnAssignments } from "~/domain/learned-assignment";
 
 import type { Route } from "./+types/import";
 
@@ -18,13 +27,16 @@ export async function action({ request }: Route.ActionArgs) {
   }
   try {
     const parsed = parseDkbExport(await file.text());
-    const added = addTransactions(getDatabase(), parsed.transactions);
+    const database = getDatabase();
+    const added = addTransactions(database, parsed.transactions);
     return {
       summary: {
         fileName: file.name,
         added,
         known: parsed.transactions.length - added,
         pending: parsed.pendingCount,
+        assignedAutomatically: assignFromHistory(database),
+        stillOpen: countUnassignedSpending(database),
       },
     };
   } catch (error) {
@@ -33,6 +45,11 @@ export async function action({ request }: Route.ActionArgs) {
     }
     throw error;
   }
+}
+
+/** Earlier payments teach the categories of new ones; whatever stays unclear waits on Zuordnen. */
+function assignFromHistory(database: Database): number {
+  return assignAutomatically(database, learnAssignments(unassignedSpending(database), assignedSpending(database)));
 }
 
 export default function ImportPage({ actionData }: Route.ComponentProps) {
@@ -82,9 +99,13 @@ export default function ImportPage({ actionData }: Route.ComponentProps) {
             <Stat label="schon bekannt" value={actionData.summary.known} />
             <Stat label="vorgemerkt" value={actionData.summary.pending} />
           </dl>
-          {actionData.summary.added > 0 && (
+          <p className="mt-4 text-sm text-stone-500">
+            {actionData.summary.assignedAutomatically} automatisch zugeordnet wie frühere Zahlungen,{" "}
+            {actionData.summary.stillOpen} warten noch auf eine Kategorie.
+          </p>
+          {actionData.summary.assignedAutomatically + actionData.summary.stillOpen > 0 && (
             <Link to="/zuordnen" className="mt-4 block rounded-xl bg-stone-900 px-5 py-3 text-center font-semibold text-white dark:bg-white dark:text-stone-900">
-              Jetzt zuordnen →
+              Prüfen und zuordnen →
             </Link>
           )}
         </Card>
